@@ -80,13 +80,13 @@ define([
                     let totxt = '';
                     let pageCount = 0;
 
-                    //TODO Config declaration ==========================================
+                    //? Config declaration ==========================================
                     const userObj = runtime.getCurrentUser();
                     let configRecObj = config.load({ type: config.Type.COMPANY_INFORMATION });
                     const URL = configRecObj.getValue({ fieldId: 'appurl' }); //!https://cuenta.app.netsuite.com
                     let form = serverWidget.createForm({ title: 'Reporte de Presupuesto', hideNavBar: false });
                     form.clientScriptFileId = CLIENT_SCRIPT_FILE_ID;
-                    //TODO==============================================================
+                    //?==============================================================
 
                     //*Parameters ======================================================
                     parametros = new Parametros(from, to, fromtxt, totxt, budget, costcenter, category, account);
@@ -296,7 +296,7 @@ define([
                     form.addButton({ id: 'btnClean', label: 'Limpiar Filtros', functionName: 'cancelarFiltros' });
                     scriptContext.response.writePage(form);
                 } else {
-                    //let sublistData = scriptContext.request.parameters.sublistdata;
+                    // let sublistData = scriptContext.request.parameters.sublistdata;
                     // let json = new Array();
                     // json = {
                     //     'custscript_year_rp': scriptContext.request.parameters.custpage_filter_year_rp_flag,
@@ -316,9 +316,9 @@ define([
                     //     deploymentId: 'customdeploy_ts_ui_reporte_rp_report',
                     //     parameters: {}
                     // });
-                    let pruebaFunc = _Controller.test_set_getValue();
-                    log.debug('pruebaFunc', pruebaFunc);
-                    scriptContext.response.write(pruebaFunc);
+                    // let pruebaFunc = _Controller.test_set_getValue();
+                    // log.debug('pruebaFunc', pruebaFunc);
+                    // scriptContext.response.write(pruebaFunc);
                 }
             } catch (error) {
                 log.error('Error-onRequest', error);
