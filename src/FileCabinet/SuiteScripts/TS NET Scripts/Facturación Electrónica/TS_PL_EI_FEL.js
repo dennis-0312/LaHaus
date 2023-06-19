@@ -2,11 +2,11 @@
 This script for E-Invoicing, Invoice, Credit Memo
 /******************************************************************************************************************************************************** 
 File Name: TS_PL_EI_FEL.js                                                                        
-Commit: 06                                                        
-Version: 1.7                                                                    
-Date: 01/09/2022
+Commit: 09                                                        
+Version: 1.8                                                                    
+Date: 14/10/2022
 ApiVersion: Script 2.x
-Enviroment: SB
+Enviroment: PR
 Governance points: N/A
 ========================================================================================================================================================*/
 
@@ -15,8 +15,8 @@ Governance points: N/A
  * @NScriptType plugintypeimpl
  * @NModuleScope Public
  */
-define(["N/record", "N/file", "N/email", "N/encode", "N/search", "N/https", "N/log"],
-    function (record, file, email, encode, search, https, log) {
+define(["N/record", "N/file", "N/email", "N/encode", "N/search", "N/https", "N/log", 'N/runtime'],
+    function (record, file, email, encode, search, https, log, runtime) {
         var TYPE_TRANSACTION = '';
         var ID_TRANSACTION = '';
         var USER_ID = '';
@@ -72,20 +72,16 @@ define(["N/record", "N/file", "N/email", "N/encode", "N/search", "N/https", "N/l
 
                 var docType = '';
                 var typeNdNc = '';
-                var prefijoDoc = '';
                 var tipoDocumento = '';
                 var nameDoc = '';
                 var noDocNs = false;
                 var nmroDocRel = '';
                 var dateFormatedRel = '';
-                var pref_sb = '';
 
                 if (employeeResult[0]['document_type'] == 'invoice') {
 
                     docType = 'FVN';
                     typeNdNc = null;
-                    pref_sb = 'HAUS';
-                    prefijoDoc = 'SETT';
                     tipoDocumento = '01';
                     nameDoc = 'FACTURA';
                     dueDocument = formatDate(employeeResult[0]['due_date_document']);
@@ -96,8 +92,6 @@ define(["N/record", "N/file", "N/email", "N/encode", "N/search", "N/https", "N/l
 
                     docType = 'NC';
                     typeNdNc = employeeResult[0]['tipo_nc'];
-                    pref_sb = 'NCLH';
-                    prefijoDoc = 'NCRE';
                     tipoDocumento = '91';
                     nameDoc = 'NOTA DE CRÉDITO';
                     dueDocument = dateFormated2;
@@ -109,14 +103,8 @@ define(["N/record", "N/file", "N/email", "N/encode", "N/search", "N/https", "N/l
                 }
 
                 var operationType = (rec.getText('custbody_lh_co_ei_tipo_operacion')).substring(0, 2);
-                //log.debug('operationType', operationType);
 
-                // var operationType = "10";
-                // if (nmroDocRel) {
-                //     if (docType == 'NC' && ((nmroDocRel.toUpperCase()).substring(0, 4) != 'HAUS' || noDocNs)) operationType = "22";
-                // }
-
-                var nmroDocTrans = (employeeResult[0]['document_number']).replace(pref_sb, prefijoDoc);
+                var nmroDocTrans = employeeResult[0]['document_number'];
                 var documentHead = {
                     "documentType": docType, // como diferencio las distintas Facturas (Nacional, de Exportacion) (identifica el tipo de documento a procesar)
                     "type": typeNdNc,       // tipo de nota crédito o débito
@@ -240,13 +228,14 @@ define(["N/record", "N/file", "N/email", "N/encode", "N/search", "N/https", "N/l
                 var sumaTaxable = 0.00;
                 var sumaTaxes = 0.00;
                 var sumaDescuentos = 0.00;
-
                 var lineTransaction = rec.getLineCount('item');
                 for (var i = 0; i < lineTransaction; i++) {
-
                     var typeItem = rec.getSublistValue({ sublistId: "item", fieldId: "itemtype", line: i });
                     var iswht = rec.getSublistValue({ sublistId: "item", fieldId: "custcol_4601_witaxapplies", line: i });
-
+                    //var docstatu = 'Línea: ' + i + ' - item: ' + rec.getSublistValue({ sublistId: "item", fieldId: "description", line: i })     
+                    // var scriptObj = runtime.getCurrentScript();
+                    // var dosRes = 'Línea: ' + i + '- Con retención: ' + scriptObj.getRemainingUsage();
+                    // logStatus(ID_TRANSACTION, dosRes);
                     if (typeItem !== 'Discount') {
                         var nameItem = rec.getSublistValue({ sublistId: "item", fieldId: "description", line: i }) || "-";
                         var nameProject = rec.getSublistText({ sublistId: "item", fieldId: "job_display", line: i }) || "-";
@@ -349,11 +338,9 @@ define(["N/record", "N/file", "N/email", "N/encode", "N/search", "N/https", "N/l
                 // AGREGANDO INFORMACIÓN DE ACUERDO AL TIPO DE TRANSACTION
                 if (TYPE_TRANSACTION != 'invoice') {
                     // SOLO PARA NC Y ND
-                    var invoiceNumberRel = nmroDocRel.replace('HAUS', 'SETT');
+                    var invoiceNumberRel = nmroDocRel;
                     var invoiceDateRel = dateFormatedRel;
                     var descriptionRel = employeeResult[0]['name_tipo_nc'];
-
-                    //log.debug('field custbody_refno_originvoice', rec.getValue('custbody_refno_originvoice'));
 
                     //if (!rec.getValue('custbody_refno_originvoice')) {
                     if (nmroDocRel == 'NULL' || nmroDocRel == 'null') {
@@ -532,7 +519,7 @@ define(["N/record", "N/file", "N/email", "N/encode", "N/search", "N/https", "N/l
             } catch (e) {
                 result.success = false;
                 result.message = "Failure";
-                logError(ID_TRANSACTION, USER_ID, "Error al enviar el documento a ESTUPENDO", MY_SUBSIDIARY, "Error en la respuesta del API de ESTUPENDO al enviar el documento");
+                logError(ID_TRANSACTION, USER_ID, "Error al enviar el documento a ESTUPENDO", MY_SUBSIDIARY, "Error en la respuesta del API de ESTUPENDO al enviar el documento. Detalle: " + e.message);
                 return false;
             }
         }
@@ -566,7 +553,7 @@ define(["N/record", "N/file", "N/email", "N/encode", "N/search", "N/https", "N/l
             } catch (e) {
                 result.success = false;
                 result.message = "Failure";
-                logError(ID_TRANSACTION, USER_ID, "Error al consultar el estado del documento", MY_SUBSIDIARY, "Error en la respuesta del API de ESTUPENDO que consulta el estado del documento emitido");
+                logError(ID_TRANSACTION, USER_ID, "Error al consultar el estado del documento", MY_SUBSIDIARY, "Error en la respuesta del API de ESTUPENDO que consulta el estado del documento emitido. Detalle: " + e.message);
                 return false;
             }
         }
@@ -834,9 +821,7 @@ define(["N/record", "N/file", "N/email", "N/encode", "N/search", "N/https", "N/l
                 logStatus.setValue('custrecord_co_ei_document', internalid);
                 logStatus.setValue('custrecord_co_ei_document_status', docstatus);
                 logStatus.save();
-            } catch (e) {
-
-            }
+            } catch (e) { }
         }
 
 
@@ -849,9 +834,7 @@ define(["N/record", "N/file", "N/email", "N/encode", "N/search", "N/https", "N/l
                 logError.setValue("custrecord_co_ei_log_status", _docstatus);
                 logError.setValue("custrecord_co_ei_log_response", _response);
                 logError.save();
-            } catch (e) {
-
-            }
+            } catch (e) { }
         }
 
         return {
@@ -930,4 +913,13 @@ Version: 1.7
 Date: 01/09/2022
 Author: Jean Ñique
 Description: Modificación del script para generar facturas que no fueron creadas por NetSuite
+========================================================================================================================================================*/
+/********************************************************************************************************************************************************
+TRACKING
+/********************************************************************************************************************************************************
+/* Commit:09
+Version: 1.8
+Date: 14/10/2022
+Author: Jean Ñique
+Description: Modificación del script para agregar los códigos de impuesto de la DIAN y el manejo de errores
 ========================================================================================================================================================*/

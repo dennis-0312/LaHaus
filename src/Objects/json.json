@@ -1,0 +1,83 @@
+{
+    "factura": {
+        "IDE": {
+            "numeracion": "FE01-00004994",
+            "fechaEmision": "2023-6-6",
+            "horaEmision": "3:27:00",
+            "codTipoDocumento": "01",
+            "tipoMoneda": "USD",
+            "numeroOrdenCompra": "",
+            "fechaVencimiento": ""
+        },
+        "EMI": {
+            "tipoDocId": "6",
+            "numeroDocId": "20516588765",
+            "nombreComercial": "",
+            "razonSocial": "BUILDEX S.A.C.",
+            "direccion": "Av. Republica de Panama Nro. 4130 ",
+            "departamento": "Surquillo",
+            "provincia": "Lima",
+            "distrito": "",
+            "codigoPais": "PE",
+            "telefono": "",
+            "correoElectronico": "iferro@myevol.biz",
+            "codigoAsigSUNAT": "0000"
+        },
+        "REC": {
+            "tipoDocId": "6",
+            "numeroDocId": "20380576181",
+            "razonSocial": "Cambridge College Lima SAC",
+            "direccion": "Alameda De Los Molinos 728, Distrito de Chorrillos,  15067 Perú ",
+            "departamento": "Lima",
+            "provincia": "Lima",
+            "distrito": "",
+            "codigoPais": "PE",
+            "telefono": "+51992187206",
+            "correoElectronico": "miguel.rodriguez@cambridge.edu.pe"
+        },
+        "DRF": [],
+        "CAB": {
+            "gravadas": {
+                "codigo": "1001",
+                "totalVentas": "1000.00"
+            },
+            "totalImpuestos": [
+                {
+                    "idImpuesto": "1000",
+                    "montoImpuesto": "180.00"
+                }
+            ],
+            "importeTotal": "1180.00",
+            "tipoOperacion": "0101",
+            "leyenda": [
+                {
+                    "codigo": "1000",
+                    "descripcion": "UN MIL CIENTO OCHENTA SOLES "
+                }
+            ],
+            "montoTotalImpuestos": "180.00"
+        },
+        "DET": [
+            {
+                "numeroItem": "1",
+                "codigoProducto": "Anticipo",
+                "descripcionProducto": "",
+                "cantidadItems": "1",
+                "unidad": "",
+                "valorUnitario": "1000",
+                "precioVentaUnitario": "1180",
+                "totalImpuestos": [
+                    {
+                        "idImpuesto": "1000",
+                        "montoImpuesto": "180.00",
+                        "tipoAfectacion": "10",
+                        "montoBase": "1000",
+                        "porcentaje": "18"
+                    }
+                ],
+                "valorVenta": "1000",
+                "montoTotalImpuestos": "180"
+            }
+        ]
+    }
+}
