@@ -78,38 +78,38 @@ define([
     const beforeSubmit = (scriptContext) => {
         const objRecord = scriptContext.newRecord;
         if (scriptContext.type === scriptContext.UserEventType.CREATE || scriptContext.type === scriptContext.UserEventType.EDIT) {
-            if (objRecord.type == VENDOR_BILL || objRecord.type == VENDOR_CREDIT) {
-                try {
-                    let date = objRecord.getValue({ fieldId: 'trandate' });
-                    let year = sysDate(date); //! sysDate (FUNCTION)
+            // if (objRecord.type == VENDOR_BILL || objRecord.type == VENDOR_CREDIT) {
+            //     try {
+            //         let date = objRecord.getValue({ fieldId: 'trandate' });
+            //         let year = sysDate(date); //! sysDate (FUNCTION)
 
-                    let myRestletHeaders = new Array();
-                    myRestletHeaders['Accept'] = '*/*';
-                    myRestletHeaders['Content-Type'] = 'application/json';
+            //         let myRestletHeaders = new Array();
+            //         myRestletHeaders['Accept'] = '*/*';
+            //         myRestletHeaders['Content-Type'] = 'application/json';
 
-                    let myUrlParameters = {
-                        recordParameter: objRecord.id,
-                        typeParameter: objRecord.type,
-                        ntypeParameter: objRecord.getValue({ fieldId: 'ntype' }),
-                        yearParameter: year
-                    }
+            //         let myUrlParameters = {
+            //             recordParameter: objRecord.id,
+            //             typeParameter: objRecord.type,
+            //             ntypeParameter: objRecord.getValue({ fieldId: 'ntype' }),
+            //             yearParameter: year
+            //         }
 
-                    log.debug('Parameters', myUrlParameters);
+            //         log.debug('Parameters', myUrlParameters);
 
-                    let myRestletRequest = https.requestRestlet({
-                        deploymentId: 'customdeploy_ts_rs_control_presupuestal',
-                        scriptId: 'customscript_ts_rs_control_presupuestal',
-                        headers: myRestletHeaders,
-                        method: 'GET',
-                        urlParams: myUrlParameters
-                    });
+            //         let myRestletRequest = https.requestRestlet({
+            //             deploymentId: 'customdeploy_ts_rs_control_presupuestal',
+            //             scriptId: 'customscript_ts_rs_control_presupuestal',
+            //             headers: myRestletHeaders,
+            //             method: 'GET',
+            //             urlParams: myUrlParameters
+            //         });
 
-                    // let myRestletResponse = myRestletRequest.code;
-                    // log.debug('Response', myRestletResponse);
-                } catch (error) {
-                    log.error('Error-AS', error);
-                }
-            }
+            //         // let myRestletResponse = myRestletRequest.code;
+            //         // log.debug('Response', myRestletResponse);
+            //     } catch (error) {
+            //         log.error('Error-AS', error);
+            //     }
+            // }
 
             if (scriptContext.newRecord.type == PURCHASE_ORDER || scriptContext.newRecord.type == EXPENSE_REPORT) {
                 let symbol = objRecord.getValue({ fieldId: 'currencysymbol' });
@@ -204,7 +204,7 @@ define([
 
     return {
         beforeLoad: beforeLoad,
-        //beforeSubmit: beforeSubmit,
+        beforeSubmit: beforeSubmit,
         afterSubmit: afterSubmit
     }
 });
