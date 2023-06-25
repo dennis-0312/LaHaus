@@ -2,7 +2,7 @@
  *@NApiVersion 2.1
  *@NScriptType UserEventScript
  */
- define(['N/log','N/record','N/search','N/error'], function(log,record,search,error) {
+define(['N/log', 'N/record', 'N/search', 'N/error'], function (log, record, search, error) {
     const CONFIG_PPTO_SEARCH = 'customsearch_co_config_presupuestal';
     const CONTROL_PRESUPUESTAL_RESERVADO_PO = 'customsearch_control_ppto_reservado_po'; //Control Presupuestal RESERVADO PO - PRODUCCIÓN
     const CONTROL_PRESUPUESTAL_RESERVADO_ER = 'customsearch_control_ppto_reservado_er'; //Control Presupuestal RESERVADO ER - PRODUCCIÓN
@@ -43,13 +43,14 @@
         }
     }
 
+
     function beforeSubmit(scriptContext) {
         const objRecord = scriptContext.newRecord;
         let importacion = objRecord.getValue('custbody_lh_importacion_csv');
-        if(importacion){
+        if (importacion) {
             if (scriptContext.type === scriptContext.UserEventType.CREATE) {
                 let tipoCambio = getTipoCambio();
-        
+
                 if (tipoCambio.co == 0 || tipoCambio.mx == 0) {
                     var myCustomError = error.create({
                         name: 'EventError',
@@ -65,97 +66,99 @@
                 let msgCriterio = '';
                 let msgVacio = ''
                 let temporalidad = objRecord.getValue('custbody_lh_temporalidad_flag');
-                var numLines = objRecord.getLineCount({sublistId: 'item'});
-                
+                var numLines = objRecord.getLineCount({ sublistId: 'item' });
+
                 for (let i = 0; i < numLines; i++) {
-                    log.debug('numLines',i);
+                    log.debug('numLines', i);
                     if (temporalidad != 0) {
-                        let status = objRecord.getSublistValue({ sublistId: 'item', fieldId: 'custcol_lh_approval_status',line: i });
+                        let status = objRecord.getSublistValue({ sublistId: 'item', fieldId: 'custcol_lh_approval_status', line: i });
 
-                            if (status == 1) {
-                                let nivelControl = parseInt(objRecord.getValue('custbody_lh_nivel_control_flag'));
-                                log.debug('nivelControl',nivelControl);
-                                let desviacion = objRecord.getValue('custbody_lh_desviacion_flag');
-                                let date = objRecord.getValue({ fieldId: 'trandate' });
-                                date = sysDate(date); //! sysDate (FUNCTION)
-                                // console.log(date);
-                            
-                                let month = date.month;
-                                let criterioControl = objRecord.getSublistValue({ sublistId: 'item', fieldId: 'department',line: i });
-                                let criterioControlCategoria = objRecord.getSublistValue({ sublistId: 'item', fieldId: 'custcol_lh_categoria_ppto_oc',line: i });
-                                switch (nivelControl) {
-                                    case CECO_NIVEL_CONTROL:
-                                        msgCriterio = 'No tiene presupuesto para este centro de costo.';
-                                        msgVacio = 'Debe ingresar un centro de costo.';
-                                        break;
-                                    case CUENTA_NIVEL_CONTROL:
-                                        msgCriterio = 'No tiene presupuesto para esta cuenta.';
-                                        msgVacio = 'Debe ingresar una cuenta.';
-                                        break;
-                                    case CATEGORIA_NIVEL_CONTROL:
-                                        msgVacio = 'Debe ingresar un centro de costo.';
-                                        if (criterioControlCategoria.length == 0) {
-                                            var myCustomError = error.create({
-                                                name: 'EventError',
-                                                message: 'Debe ingresar una categoría',
-                                                notifyOff: false
-                                            });
-                                            throw myCustomError;
-                                            
-                                        }
-                                        
-                                        msgCriterio = 'No tiene presupuesto para este centro de costo.';
-                                       
-                                        break;
-                                    default:
-                                        msgCriterio = 'Revisar la configuración del Nivel de Control.'
-                                        break;
-                                }
-            
-                                if (criterioControl.length == 0) {
-                                    var myCustomError = error.create({
-                                        name: 'EventError',
-                                        message: msgVacio,
-                                        notifyOff: false
-                                    });
-                                    throw myCustomError;
-                                }
-                                let quantity = parseInt(objRecord.getSublistValue({ sublistId: 'item', fieldId: 'quantity' ,line: i }));
-                                let quantityBilled = objRecord.getSublistValue({ sublistId: 'item', fieldId: 'quantitybilled',line: i  });
-                            
-                                quantityBilled = typeof quantityBilled == 'undefined' ? 0 : parseInt(quantityBilled);
-                            
-                                let rate = parseFloat(objRecord.getSublistValue({ sublistId: 'item', fieldId: 'rate',line: i }));
-                                let solicitud = (quantity - quantityBilled) * rate;
-                            
-                                json = [criterioControl, quantity, quantityBilled, rate, status];
-                               
-                                
-                                let disponible = getDisponible(temporalidad, month, date.year, criterioControl, objRecord,i); //! getDisponible (FUNCTION)
-                                
-                                
-                                log.debug('solicitud',solicitud);
-                                log.debug('disponible',disponible);
-                                        if (disponible <= solicitud) {
-                                            i=i+1;
-                                            var myCustomError = error.create({
-                                                name: 'EventError',
-                                                message: 'No Tienes presupuesto disponible en la linea '+i,
-                                                notifyOff: false
-                                            });
-                                            throw myCustomError;
-                                        
-                                        }
+                        if (status == 1) {
+                            let nivelControl = parseInt(objRecord.getValue('custbody_lh_nivel_control_flag'));
+                            log.debug('nivelControl', nivelControl);
+                            let desviacion = objRecord.getValue('custbody_lh_desviacion_flag');
+                            let date = objRecord.getValue({ fieldId: 'trandate' });
+                            date = sysDate(date); //! sysDate (FUNCTION)
+                            // console.log(date);
 
-                            } 
+                            let month = date.month;
+                            let criterioControl = objRecord.getSublistValue({ sublistId: 'item', fieldId: 'department', line: i });
+                            let criterioControlCategoria = objRecord.getSublistValue({ sublistId: 'item', fieldId: 'custcol_lh_categoria_ppto_oc', line: i });
+                            switch (nivelControl) {
+                                case CECO_NIVEL_CONTROL:
+                                    msgCriterio = 'No tiene presupuesto para este centro de costo.';
+                                    msgVacio = 'Debe ingresar un centro de costo.';
+                                    break;
+                                case CUENTA_NIVEL_CONTROL:
+                                    msgCriterio = 'No tiene presupuesto para esta cuenta.';
+                                    msgVacio = 'Debe ingresar una cuenta.';
+                                    break;
+                                case CATEGORIA_NIVEL_CONTROL:
+                                    msgVacio = 'Debe ingresar un centro de costo.';
+                                    if (criterioControlCategoria.length == 0) {
+                                        var myCustomError = error.create({
+                                            name: 'EventError',
+                                            message: 'Debe ingresar una categoría',
+                                            notifyOff: false
+                                        });
+                                        throw myCustomError;
 
-                
+                                    }
+
+                                    msgCriterio = 'No tiene presupuesto para este centro de costo.';
+
+                                    break;
+                                default:
+                                    msgCriterio = 'Revisar la configuración del Nivel de Control.'
+                                    break;
+                            }
+
+                            if (criterioControl.length == 0) {
+                                var myCustomError = error.create({
+                                    name: 'EventError',
+                                    message: msgVacio,
+                                    notifyOff: false
+                                });
+                                throw myCustomError;
+                            }
+                            let quantity = parseInt(objRecord.getSublistValue({ sublistId: 'item', fieldId: 'quantity', line: i }));
+                            let quantityBilled = objRecord.getSublistValue({ sublistId: 'item', fieldId: 'quantitybilled', line: i });
+
+                            quantityBilled = typeof quantityBilled == 'undefined' ? 0 : parseInt(quantityBilled);
+
+                            let rate = parseFloat(objRecord.getSublistValue({ sublistId: 'item', fieldId: 'rate', line: i }));
+                            let solicitud = (quantity - quantityBilled) * rate;
+
+                            json = [criterioControl, quantity, quantityBilled, rate, status];
+
+
+                            let disponible = getDisponible(temporalidad, month, date.year, criterioControl, objRecord, i); //! getDisponible (FUNCTION)
+
+
+                            log.debug('solicitud', solicitud);
+                            log.debug('disponible', disponible);
+                            if (disponible <= solicitud) {
+                                i = i + 1;
+                                var myCustomError = error.create({
+                                    name: 'EventError',
+                                    message: 'No Tienes presupuesto disponible en la linea ' + i,
+                                    notifyOff: false
+                                });
+                                throw myCustomError;
+
+                            }
+
+                        }
+
+
                     }
                 }
-            
+
             }
         }
     }
+
+
     const getTipoCambio = () => {
         let objSearch = search.load({ id: TIPO_CAMBIO_SEARCH });
         // let filters = objSearch.filters;
@@ -185,39 +188,40 @@
         }
     }
 
-    const getDisponible = (temporalidad, month, year, criterioControl, objRecord,i) => {
+
+    const getDisponible = (temporalidad, month, year, criterioControl, objRecord, i) => {
         let tempo = 0;
-        
-            if (temporalidad == TEMPORALIDAD_TRIMESTRAL) {
-                //!const trimestre = [['01', '02', '03'], ['04', '05', '06'], ['07', '08', '09'], ['10', '11', '12']];
-                for (let i in arregloTrimestre) {
-                    let bloque = arregloTrimestre[i].includes(month.toString());
-                    if (bloque == true) {
-                        tempo = parseInt(i);
-                        break;
-                    }
+
+        if (temporalidad == TEMPORALIDAD_TRIMESTRAL) {
+            //!const trimestre = [['01', '02', '03'], ['04', '05', '06'], ['07', '08', '09'], ['10', '11', '12']];
+            for (let i in arregloTrimestre) {
+                let bloque = arregloTrimestre[i].includes(month.toString());
+                if (bloque == true) {
+                    tempo = parseInt(i);
+                    break;
                 }
             }
+        }
 
-            let presupuestado = getPresupuesto(criterioControl, tempo, year);
-          
-            if (presupuestado.presupuesto == 0 || presupuestado.categoria == 0) {
+        let presupuestado = getPresupuesto(criterioControl, tempo, year);
 
-                var myCustomError = error.create({
-                    name: 'EventError',
-                    message: 'No tiene una categoría de presupuesto o no tiene un monto presupuestado.',
-                    notifyOff: false
-                });
-                throw myCustomError;
-            }
-            objRecord.setSublistValue({ sublistId: 'item', fieldId: 'custcol_lh_ppto_flag', value: presupuestado.categoria ,line:i});
-            let reservado = getReservado(temporalidad, tempo, year, presupuestado.categoria);
-            let comprometido = getComprometido(temporalidad, tempo, year, presupuestado.categoria);
-            let ejecutado = getEjecutado(temporalidad, tempo, year, presupuestado.categoria);
-           
-            let disponible = presupuestado.presupuesto - (reservado + comprometido + ejecutado);
-            return disponible;
-    
+        if (presupuestado.presupuesto == 0 || presupuestado.categoria == 0) {
+
+            var myCustomError = error.create({
+                name: 'EventError',
+                message: 'No tiene una categoría de presupuesto o no tiene un monto presupuestado.',
+                notifyOff: false
+            });
+            throw myCustomError;
+        }
+        objRecord.setSublistValue({ sublistId: 'item', fieldId: 'custcol_lh_ppto_flag', value: presupuestado.categoria, line: i });
+        let reservado = getReservado(temporalidad, tempo, year, presupuestado.categoria);
+        let comprometido = getComprometido(temporalidad, tempo, year, presupuestado.categoria);
+        let ejecutado = getEjecutado(temporalidad, tempo, year, presupuestado.categoria);
+
+        let disponible = presupuestado.presupuesto - (reservado + comprometido + ejecutado);
+        return disponible;
+
     }
 
 
@@ -230,7 +234,7 @@
                 [
                     ["custrecord_lh_detalle_cppto_status_tr", "anyof", "1"],
                     "AND",
-                    ["custrecord_lh_detalle_cppto_categoria_tr.custrecord_lh_cp_centro_costo", "anyof", parseInt( criterioControl)],
+                    ["custrecord_lh_detalle_cppto_categoria_tr.custrecord_lh_cp_centro_costo", "anyof", parseInt(criterioControl)],
                     "AND",
                     ["custrecord_lh_detalle_cppto_anio_tr.name", "haskeywords", parseInt(year)]
                 ],
@@ -240,10 +244,10 @@
                     search.createColumn({ name: "custrecord_lh_detalle_cppto_" + parseInt(tempo), label: "1 Trimestre" }),
                 ]
         });
-       
+
         let resultCount = presupuestado.runPaged().count;
-    
-        log.debug('resultCount',resultCount);
+
+        log.debug('resultCount', resultCount);
         if (resultCount != 0) {
             let result = presupuestado.run().getRange({ start: 0, end: 1 });
             //console.log('ReservadoPO', JSON.stringify(resultPO));
@@ -257,7 +261,6 @@
             presupuesto: presupuesto,
         }
     }
-
 
 
     const getReservado = (temporalidad, tempo, year, categoria) => {
@@ -604,6 +607,7 @@
         return ejecutado;
     }
 
+
     const sysDate = (date_param) => {
         try {
             let date = new Date(date_param);
@@ -618,6 +622,8 @@
             console.log('Error-sysDate', e);
         }
     }
+
+    
     const getConfig = (transaction) => {
         try {
             let objSearch = search.load({ id: CONFIG_PPTO_SEARCH });
@@ -648,7 +654,7 @@
 
     return {
         beforeLoad: beforeLoad,
-        beforeSubmit : beforeSubmit
+        beforeSubmit: beforeSubmit
     }
 });
 

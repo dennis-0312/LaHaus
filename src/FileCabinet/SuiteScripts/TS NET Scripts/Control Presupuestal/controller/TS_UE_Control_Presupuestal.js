@@ -2,7 +2,14 @@
  *@NApiVersion 2.1
  *@NScriptType UserEventScript
  */
-define(['N/log', 'N/search', 'N/record', 'N/https', 'N/runtime'], (log, search, record, https, runtime) => {
+define([
+    'N/log',
+    'N/search',
+    'N/record',
+    'N/https',
+    'N/runtime',
+    '../../Reporte Presupuestal/controller/TS_Script_Controller'
+], (log, search, record, https, runtime, _controller) => {
     const CONFIG_PPTO_SEARCH = 'customsearch_co_config_presupuestal'; //CO Configuración Presupuestal Search - CP PRODUCCION
     const PURCHASE_ORDER = 'purchaseorder';
     const VENDOR_BILL = 'vendorbill';
@@ -40,6 +47,13 @@ define(['N/log', 'N/search', 'N/record', 'N/https', 'N/runtime'], (log, search, 
                         }
                     }
                 }
+
+                // if (scriptContext.newRecord.type == PURCHASE_ORDER || scriptContext.newRecord.type == EXPENSE_REPORT) {
+                //     let symbol = objRecord.getValue({ fieldId: 'currencysymbol' });
+                //     log.debug('Symbol', symbol);
+                //     let exchangeRatePPTO = _controller.getTipoCambio(symbol);
+                //     objRecord.setValue('custbody_ts_tipo_de_cambio_presupuesto', exchangeRatePPTO.exchangeRate);
+                // }
 
                 if (scriptContext.newRecord.type == PURCHASE_ORDER) {
                     if (runtime.getCurrentUser().id == Dennis) {
@@ -95,6 +109,13 @@ define(['N/log', 'N/search', 'N/record', 'N/https', 'N/runtime'], (log, search, 
                 } catch (error) {
                     log.error('Error-AS', error);
                 }
+            }
+
+            if (scriptContext.newRecord.type == PURCHASE_ORDER || scriptContext.newRecord.type == EXPENSE_REPORT) {
+                let symbol = objRecord.getValue({ fieldId: 'currencysymbol' });
+                log.debug('Symbol', symbol);
+                let exchangeRatePPTO = _controller.getTipoCambio(symbol);
+                objRecord.setValue('custbody_ts_tipo_de_cambio_presupuesto', exchangeRatePPTO.exchangeRate);
             }
         }
     }

@@ -4,6 +4,7 @@
 define(['N/log',
     'N/search',
     'N/record',
+    '../constant/TS_CM_Constant',
 ],
     (log, search, record) => {
         const CONFIG_PPTO_SEARCH = 'customsearch_co_config_presupuestal'; //CO Configuración Presupuestal Search - CP PRODUCCION
@@ -11,9 +12,12 @@ define(['N/log',
         const RESERVADO_SEARCH = 'customsearch_control_ppto_reservado'; //Control Presupuestal RESERVADO - PRODUCCIÓN
         const COMPROMETIDO_SEARCH = 'customsearch_control_ppto_comprometido'; //Control Presupuestal COMPROMETIDO - PRODUCCIÓN
         const EJECUTADO_SEARCH = 'customsearch_control_ppto_ejecutado'; //Control Presupuestal EJECUTADO - PRODUCCIÓN
+        const TIPO_CAMBIO_SEARCH = 'customsearch_co_tipo_cambio'; //CO Tipo Cambio Search - CP PRODUCCION
         const ADI_TRANS_RECORD = 'customrecord_lh_categoriap_transferencia';
         const ADICION_PPTO = 1;
         const TRANSFERENCIA_PPTO = 2;
+        const COP = 1
+        const MXN = 5
 
         return ({
             getPresupuestado: (fdesde, fhasta, categoriappto) => {
@@ -119,14 +123,14 @@ define(['N/log',
             },
 
             getReservado: (fdesde, fhasta, categoriappto) => {
-                let reservado = 0;      
+                let reservado = 0;
                 let reservadoSearch = search.load({ id: RESERVADO_SEARCH });
                 let filters1 = reservadoSearch.filters;
                 const filterOne = search.createFilter({ name: 'trandate', operator: search.Operator.WITHIN, values: [fdesde, fhasta] });
                 filters1.push(filterOne);
                 const filterThree = search.createFilter({ name: 'custcol_lh_ppto_flag', operator: search.Operator.ANYOF, values: categoriappto });
                 filters1.push(filterThree);
-                
+
                 let searchResultCount = reservadoSearch.runPaged().count;
                 if (searchResultCount != 0) {
                     let result = reservadoSearch.run().getRange({ start: 0, end: 1 });
@@ -166,14 +170,14 @@ define(['N/log',
                 //             })
                 //         ]
                 // });
-                
+
                 let comprometidoSearch = search.load({ id: COMPROMETIDO_SEARCH });
                 let filters2 = comprometidoSearch.filters;
                 const filterFive = search.createFilter({ name: 'trandate', operator: search.Operator.WITHIN, values: [fdesde, fhasta] });
                 filters2.push(filterFive);
                 const filterSix = search.createFilter({ name: 'custcol_lh_ppto_flag', operator: search.Operator.ANYOF, values: categoriappto });
                 filters2.push(filterSix);
-                
+
                 let searchResultCount = comprometidoSearch.runPaged().count;
                 if (searchResultCount != 0) {
                     let result = comprometidoSearch.run().getRange({ start: 0, end: 1 });
@@ -409,6 +413,34 @@ define(['N/log',
                     // } 
                 }
                 return temporalidad;
+            },
+
+            getTipoCambio: (symbol) => {
+                let exchangeRate = 1;
+                if (symbol == 'COP' || symbol == 'MXN') {
+                    let objSearch = search.load({ id: TIPO_CAMBIO_SEARCH });
+                    let filters = objSearch.filters;
+                    const symbolFilter = search.createFilter({ name: 'symbol', join: 'custrecord_lh_tc_moneda', operator: 'startswith', values: symbol });
+                    filters.push(symbolFilter);
+                    // const filterTwo = search.createFilter({ name: 'custrecord_lh_tc_periodo', operator: search.Operator.ANYOF, values: internalidPeriod });
+                    // filters.push(filterTwo);
+                    let searchResultCount = objSearch.runPaged().count;
+
+                    if (searchResultCount != 0) {
+                        let result = objSearch.run().getRange({ start: 0, end: 1 });
+                        //console.log('result', JSON.stringify(result));
+                        for (let i in result) {
+                            //let symbol = result[i].getValue({ name: "symbol", join: "CUSTRECORD_LH_TC_MONEDA", summary: "GROUP" });
+                            exchangeRate = parseFloat(result[i].getValue({ name: "custrecord_lh_tc_tipo_cambio", summary: "GROUP" }));
+                        }
+                        return { exchangeRate: exchangeRate }
+                    } else {
+                        return { exchangeRate: exchangeRate }
+                    }
+                } else {
+                    return { exchangeRate: exchangeRate }
+                }
+
             }
         });
     });

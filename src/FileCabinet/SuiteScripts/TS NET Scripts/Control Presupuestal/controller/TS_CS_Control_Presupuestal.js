@@ -35,7 +35,8 @@ define([
     const CURRENCY_EURO = 4;
     const CURRENCY_PESOS_MEXICANOS = 5;
     const CURRENCY_REAL_BRASILEÑO = 6;
-
+    let generalSolicitud = new Array();
+    let maestros = new Array();
     let typeMode = '';
     // const Dennis = 27160;
 
@@ -101,7 +102,7 @@ define([
                 }
 
                 list = scriptContext.currentRecord.type == PURCHASE_ORDER ? 'item' : 'expense';
-
+                let line = objRecord.getCurrentSublistIndex({ sublistId: list });
                 let criterioControl = objRecord.getCurrentSublistValue({ sublistId: list, fieldId: 'department' });
                 if (criterioControl.length == 0) {
                     alert(msgVacio);
@@ -124,7 +125,16 @@ define([
                     quantityBilled = typeof quantityBilled == 'undefined' ? 0 : parseInt(quantityBilled);
                     quantityBilled = isNaN(quantityBilled) == true ? 0 : quantityBilled;
                     let rate = parseFloat(objRecord.getCurrentSublistValue({ sublistId: 'item', fieldId: 'rate' }));
-                    solicitud = ((quantity - quantityBilled) * rate) / exchangeRate;
+                    generalSolicitud[line] = ((quantity - quantityBilled) * rate) / exchangeRate;
+                    maestros[line] = criterioControl;
+                  console.log('line: ' + generalSolicitud);
+                    // solicitud = generalSolicitud.reduce((a, b) => a + b, 0);
+                    for (let i = 0; i < maestros.length; i++) {
+                        if (maestros[i] == criterioControl) {
+                            solicitud = solicitud + parseFloat(generalSolicitud[i]);
+                        }
+                    }
+               
                     json = [criterioControl, quantity, quantityBilled, rate, categoriaControl, status];
                     console.log(json);
                     if (typeMode == 'create') {
@@ -136,7 +146,15 @@ define([
                 if (scriptContext.currentRecord.type == EXPENSE_REPORT) {
                     let currency = objRecord.getCurrentSublistValue({ sublistId: 'expense', fieldId: 'currency' });
                     exchangeRate = getTipoCambio(currency);
-                    solicitud = (parseFloat(objRecord.getCurrentSublistValue({ sublistId: 'expense', fieldId: 'amount' }))) / exchangeRate;
+                    generalSolicitud[line] = (parseFloat(objRecord.getCurrentSublistValue({ sublistId: 'expense', fieldId: 'amount' }))) / exchangeRate;
+                    maestros[line] = criterioControl;
+                    // solicitud = generalSolicitud.reduce((a, b) => a + b, 0);
+                    for (let i = 0; i < maestros.length; i++) {
+                        if (maestros[i] == criterioControl) {
+                            solicitud = solicitud + generalSolicitud[i]
+                        }
+                    }
+                   
                 }
 
                 console.log('ExchangeRate', exchangeRate);
@@ -224,7 +242,18 @@ define([
         return true;
     }
 
-
+     const validateDelete = (scriptContext) => {
+       const objRecord = scriptContext.currentRecord;
+       list = scriptContext.currentRecord.type == PURCHASE_ORDER ? 'item' : 'expense';
+       let line = objRecord.getCurrentSublistIndex({ sublistId: list });
+       
+       generalSolicitud.splice(line, 1);
+       console.log(generalSolicitud);
+       return true;
+       //generalSolicitud[line] = ((quantity - quantityBilled) * rate) / exchangeRate;
+       //maestros[line] = criterioControl;
+                  
+     }
     // const getQuaterly = (tempo, year) => {
     //     let from = '';
     //     let to = '';
@@ -774,12 +803,13 @@ define([
         return exchange;
     }
 
-
+   
     return {
         pageInit: pageInit,
         //saveRecord: saveRecord,
         //fieldChanged: fieldChanged,
         //postSourcing: postSourcing,
+        validateDelete:validateDelete,
         validateLine: validateLine,
         //sublistChanged: sublistChanged
     }

@@ -11,9 +11,6 @@ define(['N/log', 'N/record', 'N/search', 'N/error', 'N/task'], function (log, re
     const CATEGORIA_NIVEL_CONTROL = 3;
 
     function beforeSubmit(scriptContext) {
-
-
-
         const objRecord = scriptContext.newRecord;
         let temporalidad = objRecord.getValue('custbody_lh_temporalidad_flag');
         var numLines = objRecord.getLineCount({ sublistId: 'line' });
@@ -84,8 +81,6 @@ define(['N/log', 'N/record', 'N/search', 'N/error', 'N/task'], function (log, re
         try {
             for (let i = 0; i < numLines; i++) {
                 let AplicaPPTO = objRecord.getSublistValue({ sublistId: 'line', fieldId: 'custcollh_aplica_ppto', line: i });
-                let inventoryAssignment = currentRecord.selectLine({ sublistId: 'line', line: i });
-                inventoryAssignment.getCurrentSublistValue({ sublistId: 'line', fieldId: 'memo', value: 'asdasdas' });
 
                 let date = objRecord.getValue({ fieldId: 'trandate' })
 
