@@ -122,7 +122,6 @@ define(['N/log', 'N/search', 'N/record', 'N/task', 'N/runtime'], (log, search, r
                     });
             });
             arrCustomerId.map(items=>{
-         
                 let customer = record.load({ type:'customrecord_cola_aprobacion', id:items[0]});
                 let orden = customer.getValue({fieldId:'custrecord_orden_compra'});
                 customer.setValue({fieldId:'custrecord_estado',value: 'Procesando'});

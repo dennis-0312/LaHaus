@@ -16,14 +16,25 @@ define([
     const CECO_NIVEL_CONTROL = 1;
     const CUENTA_NIVEL_CONTROL = 2;
     const CATEGORIA_NIVEL_CONTROL = 3;
+    const CONFIG_PPTO_SEARCH = 'customsearch_co_config_presupuestal'; //CO Configuración Presupuestal Search - CP PRODUCCION
 
     const beforeLoad = (scriptContext) => {
         const objRecord = scriptContext.newRecord;
-        let symbol = objRecord.getValue({ fieldId: 'currencysymbol' });
-        let exchangeRatePPTO = _controller.getTipoCambio(symbol);
-        objRecord.setValue('custbody_ts_tipo_de_cambio_presupuesto', exchangeRatePPTO.exchangeRate);
-    }
+        if (scriptContext.type === scriptContext.UserEventType.CREATE || scriptContext.type === scriptContext.UserEventType.EDIT || scriptContext.type === scriptContext.UserEventType.COPY) {
+            let transaction = objRecord.getValue({ fieldId: 'ntype' });
+            let config = getConfig(transaction);
+            log.debug('config', config);
+            if (config != 0) {
+                log.debug('config2', config);
+                log.debug('PRUEBA', objRecord.getValue('custbody_ts_tipo_de_cambio_presupuesto'));
+                objRecord.setValue('custbody_lh_temporalidad_flag', config.temporalidad);
+                objRecord.setValue('custbody_lh_nivel_control_flag', config.nivelControl);
+            } else {
+                objRecord.setValue('custbody_lh_temporalidad_flag', config);
+            }
+        }
 
+    }
 
     function beforeSubmit(scriptContext) {
         const objRecord = scriptContext.newRecord;
@@ -34,6 +45,18 @@ define([
             let symbol = objRecord.getValue({ fieldId: 'currency' });
             let exchangeRatePPTO = _controller.getTipoCambio(symbol);
             objRecord.setValue('custbody_ts_tipo_de_cambio_presupuesto', exchangeRatePPTO.exchangeRate);
+
+            let transaction = objRecord.getValue({ fieldId: 'ntype' });
+            let config = getConfig(transaction);
+            // log.debug('config', config);
+            if (config != 0) {
+                // log.debug('config2', config);
+                log.debug('PRUEBA', objRecord.getValue('custbody_ts_tipo_de_cambio_presupuesto'));
+                objRecord.setValue('custbody_lh_temporalidad_flag', config.temporalidad);
+                objRecord.setValue('custbody_lh_nivel_control_flag', config.nivelControl);
+            } else {
+                objRecord.setValue('custbody_lh_temporalidad_flag', config);
+            }
         }
 
         for (let i = 0; i < numLines; i++) {
@@ -92,27 +115,29 @@ define([
         let ordenId = objRecord.id;
         let temporalidad = objRecord.getValue({ fieldId: 'custbody_lh_temporalidad_flag' });
         let numLines = objRecord.getLineCount({ sublistId: 'line' });
-        var thirdID = record.submitFields({
-            type: 'journalentry',
-            id: ordenId,
-            values: {
-                'memo': 'categoria',
-                'custcol_lh_ppto_flag ': 4
-            }
-        });
+        // var thirdID = record.submitFields({
+        //     type: 'journalentry', id: ordenId,
+        //     values: {
+        //         'memo': 'categoria',
+        //         'custcol_lh_ppto_flag ': 4
+        //     }
+        // });
+
         try {
+            log.debug('ordenId', ordenId);
             for (let i = 0; i < numLines; i++) {
                 let AplicaPPTO = objRecord.getSublistValue({ sublistId: 'line', fieldId: 'custcollh_aplica_ppto', line: i });
-
                 let date = objRecord.getValue({ fieldId: 'trandate' })
-
                 date = sysDate(date);
+                log.debug('date', date)
+
                 let month = date.month;
                 let tempo = 0;
 
                 if (AplicaPPTO) {
                     let nivelControl = parseInt(objRecord.getValue('custbody_lh_nivel_control_flag'));
                     let criterioControl = objRecord.getSublistValue({ sublistId: 'line', fieldId: 'department', line: i });
+                    log.debug('criterioControl', criterioControl)
                     if (temporalidad == TEMPORALIDAD_TRIMESTRAL) {
                         //!const trimestre = [['01', '02', '03'], ['04', '05', '06'], ['07', '08', '09'], ['10', '11', '12']];
                         for (let i in arregloTrimestre) {
@@ -125,35 +150,35 @@ define([
                     }
                     let presupuesto = 0;
                     let categoria = 0;
-                    const presupuestado = search.create({
-                        type: "customrecord_lh_presupuesto_trimestral",
+                    if (tempo <= 9) {
+                        tempo = 0 + tempo.toString();
+                    }
+                    let presupuestado = search.create({
+                        type: "customrecord_lh_categoriap_periodo",
                         filters:
                             [
-                                ["custrecord_lh_detalle_cppto_status_tr", "anyof", "1"],
+                                ["custrecord_lh_detalle_cppto_status", "anyof", "1"],
                                 "AND",
-                                ["custrecord_lh_detalle_cppto_categoria_tr.custrecord_lh_cp_centro_costo", "anyof", parseInt(criterioControl)],
+                                ["custrecord_lh_detalle_cppto_categoria.custrecord_lh_cp_centro_costo", "anyof", criterioControl],
                                 "AND",
-                                ["custrecord_lh_detalle_cppto_anio_tr.name", "haskeywords", parseInt(date.year)]
+                                ["custrecord_lh_detalle_cppto_anio.name", "haskeywords", date.year]
                             ],
                         columns:
                             [
-                                search.createColumn({ name: "custrecord_lh_detalle_cppto_categoria_tr", label: "0 Categoría" }),
-                                search.createColumn({ name: "custrecord_lh_detalle_cppto_" + parseInt(tempo), label: "1 Trimestre" }),
+                                search.createColumn({ name: "custrecord_lh_detalle_cppto_categoria", label: "0 Categoría" }),
+                                search.createColumn({ name: "custrecord_lh_detalle_cppto_" + tempo, label: "1 Trimestre" }),
                             ]
                     });
 
                     let resultCount = presupuestado.runPaged().count;
-
                     if (resultCount != 0) {
                         let result = presupuestado.run().getRange({ start: 0, end: 1 });
                         categoria = result[0].getValue(presupuestado.columns[0]);
                         presupuesto = parseFloat(result[0].getValue(presupuestado.columns[1]));
-
                     }
 
-
-
-
+                    //objRecord.setSublistValue({ sublistId: 'line', fieldId: 'custcol_lh_ppto_flag', value: categoria, line: i });
+                    //record.submitFields({ type: 'journalentry', id: ordenId, values: { 'memo': 'cate', 'custcol_lh_ppto_flag': categoria } });
                 }
             }
         } catch (e) {
@@ -178,8 +203,37 @@ define([
         }
     }
 
+
+    const getConfig = (transaction) => {
+        try {
+            let objSearch = search.load({ id: CONFIG_PPTO_SEARCH });
+            let filters = objSearch.filters;
+            const filterOne = search.createFilter({ name: 'custrecord_lh_cp_transaccion', operator: search.Operator.ANYOF, values: transaction });
+            filters.push(filterOne);
+            const filterThree = search.createFilter({ name: 'custrecord_lh_cp_flujo_aprobacion', operator: search.Operator.IS, values: true });
+            filters.push(filterThree);
+
+            let searchResultCount = objSearch.runPaged().count;
+            if (searchResultCount != 0) {
+                let resultConfig = objSearch.run().getRange({ start: 0, end: 1 });
+                let temporalidad = resultConfig[0].getValue({ name: "custrecord_lh_cp_temporalidad" });
+                // let desviacion = resultConfig[0].getValue({ name: "custrecord_lh_cp_desviacion_ppto" });
+                let nivelControl = resultConfig[0].getValue({ name: "custrecord_lh_cp_nivel_control" });
+                return {
+                    temporalidad: temporalidad,
+                    //desviacion: desviacion,
+                    nivelControl: nivelControl
+                }
+            } else {
+                return 0;
+            }
+        } catch (error) {
+            log.error('Error-getConfig', error);
+        }
+    }
+
     return {
-        //beforeLoad: beforeLoad,
+        beforeLoad: beforeLoad,
         beforeSubmit: beforeSubmit,
         afterSubmit: afterSubmit
     }

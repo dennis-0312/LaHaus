@@ -6,7 +6,7 @@ define(['N/log',
     'N/record',
     '../constant/TS_CM_Constant',
 ],
-    (log, search, record) => {
+    (log, search, record, _constant) => {
         const CONFIG_PPTO_SEARCH = 'customsearch_co_config_presupuestal'; //CO Configuración Presupuestal Search - CP PRODUCCION
         const CATEGORIA_PERIODO_RECORD = 'customrecord_lh_categoriap_periodo';
         const RESERVADO_SEARCH = 'customsearch_control_ppto_reservado'; //Control Presupuestal RESERVADO - PRODUCCIÓN
@@ -26,6 +26,7 @@ define(['N/log',
                 // let dis = 0;
                 let year = fdesde.split('/')[2];
                 //log.debug('Fecha,', fdesde);
+                //console.log('FechasInput',fdesde + '-' + fhasta);
                 //*PRESUPUESTADO =============================================================================================================================================================
                 const presupuestado = search.create({
                     type: CATEGORIA_PERIODO_RECORD,
@@ -43,16 +44,20 @@ define(['N/log',
                         ]
                 });
                 let resultCount = presupuestado.runPaged().count;
+                //console.log('Res',resultCount);
                 if (resultCount != 0) {
                     let result = presupuestado.run().getRange({ start: 0, end: 1 });
+                    //console.log('result',JSON.stringify(result));
                     let internalid = result[0].getValue(presupuestado.columns[0]);
                     let recordLoad = record.load({ type: CATEGORIA_PERIODO_RECORD, id: internalid, isDynamic: true });
                     let from = parseInt(fdesde.split('/')[1]);
                     let to = parseInt(fhasta.split('/')[1]);
+                    //console.log('Fechas',from + '-' + to);
                     for (let i = from; i <= to; i++) {
                         if (i <= 9) {
                             i = '0' + i
                         }
+                        //console.log('I',i);
                         let monto = parseFloat(recordLoad.getValue('custrecord_lh_detalle_cppto_' + i));
                         pre += monto
                     }

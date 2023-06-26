@@ -2,7 +2,7 @@
  *@NApiVersion 2.1
  *@NScriptType MapReduceScript
  */
-define(['N/log', 'N/search', 'N/record', 'N/task', 'N/runtime'], function(log, search, record, task, runtime) {
+define(['N/log', 'N/search', 'N/record', 'N/task', 'N/runtime'], function (log, search, record, task, runtime) {
     const scriptObj = runtime.getCurrentScript();
     const arregloTrimestre = [['01', '02', '03'], ['04', '05', '06'], ['07', '08', '09'], ['10', '11', '12']];
 
@@ -10,23 +10,23 @@ define(['N/log', 'N/search', 'N/record', 'N/task', 'N/runtime'], function(log, s
 
     function getInputData() {
         let id = scriptObj.getParameter({ name: 'custscriptcustscript_param_journal' });
-        let customer = record.load({ type:'journalentry', id:id}); 
-        let temporalidad = customer.getValue({fieldId:'custbody_lh_temporalidad_flag'});
-        let numLines =  customer.getLineCount({sublistId: 'line'});
+        let customer = record.load({ type: 'journalentry', id: id });
+        let temporalidad = customer.getValue({ fieldId: 'custbody_lh_temporalidad_flag' });
+        let numLines = customer.getLineCount({ sublistId: 'line' });
         let categoria = 0;
         let oldcriterioControl;
-        try{
+        try {
             for (let i = 0; i < numLines; i++) {
-                let AplicaPPTO = customer.getSublistValue({ sublistId: 'line', fieldId: 'custcollh_aplica_ppto',line: i });
-                
+                let AplicaPPTO = customer.getSublistValue({ sublistId: 'line', fieldId: 'custcollh_aplica_ppto', line: i });
+
                 let date = customer.getValue({ fieldId: 'trandate' });
-                date = sysDate(date); 
+                date = sysDate(date);
                 let month = date.month;
                 let tempo = 0;
-                
-                if(AplicaPPTO){
+
+                if (AplicaPPTO) {
                     let nivelControl = parseInt(customer.getValue('custbody_lh_nivel_control_flag'));
-                    let criterioControl = customer.getSublistValue({ sublistId: 'line', fieldId: 'department',line: i });
+                    let criterioControl = customer.getSublistValue({ sublistId: 'line', fieldId: 'department', line: i });
                     if (temporalidad == TEMPORALIDAD_TRIMESTRAL) {
                         //!const trimestre = [['01', '02', '03'], ['04', '05', '06'], ['07', '08', '09'], ['10', '11', '12']];
                         for (let i in arregloTrimestre) {
@@ -37,49 +37,40 @@ define(['N/log', 'N/search', 'N/record', 'N/task', 'N/runtime'], function(log, s
                             }
                         }
                     }
-                   if(criterioControl != oldcriterioControl){
-                    const presupuestado = search.create({
-                        type: "customrecord_lh_presupuesto_trimestral",
-                        filters:
-                            [
-                                ["custrecord_lh_detalle_cppto_status_tr", "anyof", "1"],
-                                "AND",
-                                ["custrecord_lh_detalle_cppto_categoria_tr.custrecord_lh_cp_centro_costo", "anyof", parseInt( criterioControl)],
-                                "AND",
-                                ["custrecord_lh_detalle_cppto_anio_tr.name", "haskeywords", parseInt(date.year)]
-                            ],
-                        columns:
-                            [
-                                search.createColumn({ name: "custrecord_lh_detalle_cppto_categoria_tr", label: "0 Categoría" }),
-                              
-                            ]
-                    });
-                   
-                    let resultCount = presupuestado.runPaged().count;
-                    
-                    if (resultCount != 0) {
-                        oldcriterioControl = criterioControl
-                        let result = presupuestado.run().getRange({ start: 0, end: 1 });
-                        categoria = result[0].getValue(presupuestado.columns[0]);
+                    if (criterioControl != oldcriterioControl) {
+                        const presupuestado = search.create({
+                            type: "customrecord_lh_categoriap_periodo",
+                            filters:
+                                [
+                                    ["custrecord_lh_detalle_cppto_status", "anyof", "1"],
+                                    "AND",
+                                    ["custrecord_lh_detalle_cppto_categoria.custrecord_lh_cp_centro_costo", "anyof", parseInt(criterioControl)],
+                                    "AND",
+                                    ["custrecord_lh_detalle_cppto_anio.name", "haskeywords", parseInt(date.year)]
+                                ],
+                            columns:
+                                [
+                                    search.createColumn({ name: "custrecord_lh_detalle_cppto_categoria", label: "0 Categoría" }),
+
+                                ]
+                        });
+
+                        let resultCount = presupuestado.runPaged().count;
+
+                        if (resultCount != 0) {
+                            oldcriterioControl = criterioControl
+                            let result = presupuestado.run().getRange({ start: 0, end: 1 });
+                            categoria = result[0].getValue(presupuestado.columns[0]);
+                        }
                     }
-                   }
-                    
-                    
-                    customer.setSublistValue({ sublistId: 'line', fieldId: 'custcol_lh_ppto_flag', value: categoria ,line:i});
-                   
-                    
+                    customer.setSublistValue({ sublistId: 'line', fieldId: 'custcol_lh_ppto_flag', value: categoria, line: i });
                 }
             }
             customer.save();
-        }catch (e) {
-           log.debug('Error-sysDate', e);
+        } catch (e) {
+            log.debug('Error-sysDate', e);
         }
-        
 
-
-
- 
-    
 
     }
     const sysDate = (date_param) => {
@@ -93,19 +84,19 @@ define(['N/log', 'N/search', 'N/record', 'N/task', 'N/runtime'], function(log, s
                 year: year
             }
         } catch (e) {
-           log.debug('Error-sysDate', e);
+            log.debug('Error-sysDate', e);
         }
     }
     function map(context) {
-      
+
     }
 
     function reduce(context) {
-      
+
     }
 
     function summarize(summary) {
-       
+
     }
 
     return {

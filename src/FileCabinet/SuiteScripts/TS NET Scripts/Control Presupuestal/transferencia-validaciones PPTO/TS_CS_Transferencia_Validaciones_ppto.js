@@ -240,6 +240,7 @@ define([
 
     function statusAprobacion(_internalId, _recordType, _idStatus) {
         let tempo = 0;
+        let rangeDates;
         try {
             let statusTransf = _idStatus == APPROVED_STATUS ? "aprobar" : "rechazar";
             let flag = confirm('¿Esta seguro de ' + statusTransf + ' la solicitud?');
@@ -288,12 +289,13 @@ define([
                                 }
                             }
                             rangeDates = _controller.getQuaterly(tempo, year);
+
                         } else if (tempConfig == TEMPORALIDAD_ANUAL) {
                             alert('Revisar proceso de transferencia anual. Comunicarse con el área de soporte.');
                         } else {
                             alert('No existe una configuración de presupuesto activo.');
                         }
-
+                        console.log('rangeDates', rangeDates);
                         let presupuestado = _controller.getPresupuestado(rangeDates.fdesde, rangeDates.fhasta, idpartidadis);
                         let reservado = _controller.getReservado(rangeDates.fdesde, rangeDates.fhasta, idpartidadis);
                         let comprometido = _controller.getComprometido(rangeDates.fdesde, rangeDates.fhasta, idpartidadis);
