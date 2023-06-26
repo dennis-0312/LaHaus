@@ -368,7 +368,7 @@ define([
                 let comprometido = _Controller.getComprometido(parametros.fdesde, parametros.fhasta, internalid);
                 // log.debug('Presupuestado', comprometido);
                 let ejecutado = _Controller.getEjecutado(parametros.fdesde, parametros.fhasta, internalid);
-                // log.debug('Presupuestado', ejecutado);
+                log.debug('Presupuestado', ejecutado);
                 let disponible = parseFloat(presupuestado) - (parseFloat(reservado) + parseFloat(comprometido) + parseFloat(ejecutado));
                 results.push({
                     'internalid': internalid,

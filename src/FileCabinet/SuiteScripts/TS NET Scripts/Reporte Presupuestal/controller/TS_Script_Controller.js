@@ -179,6 +179,7 @@ define(['N/log',
                 filters2.push(filterSix);
 
                 let searchResultCount = comprometidoSearch.runPaged().count;
+                //log.debug('CountCom', searchResultCount);
                 if (searchResultCount != 0) {
                     let result = comprometidoSearch.run().getRange({ start: 0, end: 1 });
                     comprometido = parseFloat(result[0].getValue(comprometidoSearch.columns[1]));
@@ -232,6 +233,42 @@ define(['N/log',
                 //         ]
                 // });
 
+
+                // var ejecutadoSearch = search.create({
+                //     type: "transaction",
+                //     filters:
+                //         [
+                //             [
+                //                 [["account.custrecordlh_aplica_ppto", "is", "T"], "AND", ["type", "anyof", "Journal"], "AND", ["custbody_ts_tipo_de_cambio_presupuesto", "isnotempty", ""]], "OR", [["approvalstatus", "anyof", "2"], "AND", ["custbody_ts_tipo_de_cambio_presupuesto", "isnotempty", ""], "AND", ["type", "anyof", "VendBill", "ExpRept"]], "OR", [["type", "anyof", "VendCred"], "AND", ["custbody_ts_tipo_de_cambio_presupuesto", "isnotempty", ""]], "AND", ["memorized", "is", "F"], "AND", ["formulanumeric: NVL({debitamount},0) + NVL({creditamount},0)", "greaterthan", "0"], "AND", ["posting", "is", "T"], "AND", ["formulatext: NVL({account},'X')", "isnot", "X"]
+                //             ],
+                //             "AND",
+                //             ["custcol_lh_ppto_flag", "anyof", categoriappto],
+                //             "AND",
+                //             ['trandate', 'within', fdesde, fhasta]
+                //         ],
+                //     columns:
+                //         [
+                //             search.createColumn({
+                //                 name: "custcol_lh_ppto_flag",
+                //                 summary: "GROUP",
+                //                 label: "Categoría de Presupuesto"
+                //             }),
+                //             search.createColumn({
+                //                 name: "formulacurrency",
+                //                 summary: "SUM",
+                //                 formula: "NVL({fxrate},0)/{custbody_ts_tipo_de_cambio_presupuesto}*DECODE({accounttype}, 'Equity', -1, 'Income',  -1, 'Other Income', -1, 'Accounts Payable', -1, 'Credit Card', -1, 'Deferred Revenue', -1, 'Long Term Liability', -1, 'Other Current Liability', -1, 1)",
+                //                 label: "Formula (Currency)"
+                //             })
+                //         ]
+                // });
+                //  var searchResultCount = journalentrySearchObj.runPaged().count;
+                //  log.debug("journalentrySearchObj result count",searchResultCount);
+                //  journalentrySearchObj.run().each(function(result){
+                //     // .run().each has a limit of 4,000 results
+                //     return true;
+                //  });
+
+                // log.debug('categoriappto', categoriappto);
                 let ejecutadoSearch = search.load({ id: EJECUTADO_SEARCH });
                 let filters = ejecutadoSearch.filters;
                 const filterTwo = search.createFilter({ name: 'trandate', operator: search.Operator.WITHIN, values: [fdesde, fhasta] });
@@ -240,8 +277,10 @@ define(['N/log',
                 filters.push(filterFour);
 
                 let searchResultCount = ejecutadoSearch.runPaged().count;
+                log.debug('CountEje', searchResultCount);
                 if (searchResultCount != 0) {
-                    let result = ejecutadoSearch.run().getRange({ start: 0, end: 1 });
+                    let result = ejecutadoSearch.run().getRange({ start: 0, end: 10 });
+                    log.debug('Result', result);
                     ejecutado = parseFloat(result[0].getValue(ejecutadoSearch.columns[1]));
                 }
                 return ejecutado.toFixed(2);
@@ -417,18 +456,19 @@ define(['N/log',
 
             getTipoCambio: (symbol) => {
                 let exchangeRate = 1;
-                if (symbol == 'COP' || symbol == 'MXN') {
+                if (symbol == COP || symbol == MXN) {
                     let objSearch = search.load({ id: TIPO_CAMBIO_SEARCH });
                     let filters = objSearch.filters;
-                    const symbolFilter = search.createFilter({ name: 'symbol', join: 'custrecord_lh_tc_moneda', operator: 'startswith', values: symbol });
+                    //const symbolFilter = search.createFilter({ name: 'symbol', join: 'custrecord_lh_tc_moneda', operator: 'startswith', values: symbol });
+                    const symbolFilter = search.createFilter({ name: 'custrecord_lh_tc_moneda', operator: 'anyof', values: symbol });
                     filters.push(symbolFilter);
                     // const filterTwo = search.createFilter({ name: 'custrecord_lh_tc_periodo', operator: search.Operator.ANYOF, values: internalidPeriod });
                     // filters.push(filterTwo);
                     let searchResultCount = objSearch.runPaged().count;
 
                     if (searchResultCount != 0) {
-                        let result = objSearch.run().getRange({ start: 0, end: 1 });
-                        //console.log('result', JSON.stringify(result));
+                        let result = objSearch.run().getRange({ start: 0, end: 5 });
+                        //log.debug('result', result);
                         for (let i in result) {
                             //let symbol = result[i].getValue({ name: "symbol", join: "CUSTRECORD_LH_TC_MONEDA", summary: "GROUP" });
                             exchangeRate = parseFloat(result[i].getValue({ name: "custrecord_lh_tc_tipo_cambio", summary: "GROUP" }));

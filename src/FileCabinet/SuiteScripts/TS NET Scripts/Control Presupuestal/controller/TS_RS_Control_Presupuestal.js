@@ -87,18 +87,18 @@ define(['N/log', 'N/search', 'N/record'], (log, search, record) => {
     const getCategoria = (criterioControl, year) => {
         let categoria = 0;
         const searchCategoria = search.create({
-            type: "customrecord_lh_presupuesto_trimestral",
+            type: "customrecord_lh_categoriap_periodo",
             filters:
                 [
-                    ["custrecord_lh_detalle_cppto_status_tr", "anyof", "1"],
+                    ["custrecord_lh_detalle_cppto_status", "anyof", "1"],
                     "AND",
-                    ["custrecord_lh_detalle_cppto_categoria_tr.custrecord_lh_cp_centro_costo", "anyof", criterioControl],
+                    ["custrecord_lh_detalle_cppto_categoria.custrecord_lh_cp_centro_costo", "anyof", criterioControl],
                     "AND",
-                    ["custrecord_lh_detalle_cppto_anio_tr.name", "haskeywords", year]
+                    ["custrecord_lh_detalle_cppto_anio.name", "haskeywords", year]
                 ],
             columns:
                 [
-                    search.createColumn({ name: "custrecord_lh_detalle_cppto_categoria_tr", label: "0 Categoría" })
+                    search.createColumn({ name: "custrecord_lh_detalle_cppto_categoria", label: "0 Categoría" })
                 ]
         });
 

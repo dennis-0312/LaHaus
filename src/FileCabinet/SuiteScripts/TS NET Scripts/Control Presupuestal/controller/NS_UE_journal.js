@@ -2,7 +2,14 @@
  *@NApiVersion 2.1
  *@NScriptType UserEventScript
  */
-define(['N/log', 'N/record', 'N/search', 'N/error', 'N/task'], function (log, record, search, error, task) {
+define([
+    'N/log',
+    'N/record',
+    'N/search',
+    'N/error',
+    'N/task',
+    '../../Reporte Presupuestal/controller/TS_Script_Controller'
+], function (log, record, search, error, task, _controller) {
 
     const arregloTrimestre = [['01', '02', '03'], ['04', '05', '06'], ['07', '08', '09'], ['10', '11', '12']];
     const TEMPORALIDAD_TRIMESTRAL = 2;
@@ -10,12 +17,26 @@ define(['N/log', 'N/record', 'N/search', 'N/error', 'N/task'], function (log, re
     const CUENTA_NIVEL_CONTROL = 2;
     const CATEGORIA_NIVEL_CONTROL = 3;
 
+    const beforeLoad = (scriptContext) => {
+        const objRecord = scriptContext.newRecord;
+        let symbol = objRecord.getValue({ fieldId: 'currencysymbol' });
+        let exchangeRatePPTO = _controller.getTipoCambio(symbol);
+        objRecord.setValue('custbody_ts_tipo_de_cambio_presupuesto', exchangeRatePPTO.exchangeRate);
+    }
+
+
     function beforeSubmit(scriptContext) {
         const objRecord = scriptContext.newRecord;
         let temporalidad = objRecord.getValue('custbody_lh_temporalidad_flag');
         var numLines = objRecord.getLineCount({ sublistId: 'line' });
-        for (let i = 0; i < numLines; i++) {
 
+        if (scriptContext.type === scriptContext.UserEventType.CREATE || scriptContext.type === scriptContext.UserEventType.EDIT) {
+            let symbol = objRecord.getValue({ fieldId: 'currency' });
+            let exchangeRatePPTO = _controller.getTipoCambio(symbol);
+            objRecord.setValue('custbody_ts_tipo_de_cambio_presupuesto', exchangeRatePPTO.exchangeRate);
+        }
+
+        for (let i = 0; i < numLines; i++) {
             let AplicaPPTO = objRecord.getSublistValue({ sublistId: 'line', fieldId: 'custcollh_aplica_ppto', line: i });
             if (AplicaPPTO) {
                 let nivelControl = parseInt(objRecord.getValue('custbody_lh_nivel_control_flag'));
@@ -64,8 +85,9 @@ define(['N/log', 'N/record', 'N/search', 'N/error', 'N/task'], function (log, re
             }
         }
     }
-    function afterSubmit(context) {
 
+
+    function afterSubmit(context) {
         let objRecord = context.newRecord;
         let ordenId = objRecord.id;
         let temporalidad = objRecord.getValue({ fieldId: 'custbody_lh_temporalidad_flag' });
@@ -139,6 +161,8 @@ define(['N/log', 'N/record', 'N/search', 'N/error', 'N/task'], function (log, re
         }
 
     }
+
+
     const sysDate = (date_param) => {
         try {
             let date = new Date(date_param);
@@ -155,7 +179,7 @@ define(['N/log', 'N/record', 'N/search', 'N/error', 'N/task'], function (log, re
     }
 
     return {
-
+        //beforeLoad: beforeLoad,
         beforeSubmit: beforeSubmit,
         afterSubmit: afterSubmit
     }

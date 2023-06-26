@@ -48,12 +48,13 @@ define([
                     }
                 }
 
-                // if (scriptContext.newRecord.type == PURCHASE_ORDER || scriptContext.newRecord.type == EXPENSE_REPORT) {
-                //     let symbol = objRecord.getValue({ fieldId: 'currencysymbol' });
+                // if (scriptContext.newRecord.type == PURCHASE_ORDER || scriptContext.newRecord.type == VENDOR_BILL || scriptContext.newRecord.type == VENDOR_CREDIT) {
+                //     let symbol = objRecord.getValue({ fieldId: 'currency' });
                 //     log.debug('Symbol', symbol);
                 //     let exchangeRatePPTO = _controller.getTipoCambio(symbol);
                 //     objRecord.setValue('custbody_ts_tipo_de_cambio_presupuesto', exchangeRatePPTO.exchangeRate);
                 // }
+  
 
                 if (scriptContext.newRecord.type == PURCHASE_ORDER) {
                     if (runtime.getCurrentUser().id == Dennis) {
@@ -111,9 +112,16 @@ define([
             //     }
             // }
 
-            if (scriptContext.newRecord.type == PURCHASE_ORDER || scriptContext.newRecord.type == EXPENSE_REPORT) {
-                let symbol = objRecord.getValue({ fieldId: 'currencysymbol' });
-                log.debug('Symbol', symbol);
+            if (scriptContext.newRecord.type == PURCHASE_ORDER || scriptContext.newRecord.type == VENDOR_BILL || scriptContext.newRecord.type == VENDOR_CREDIT) {
+                let symbol = objRecord.getValue({ fieldId: 'currency' });
+                //log.debug('Symbol', symbol);
+                let exchangeRatePPTO = _controller.getTipoCambio(symbol);
+                objRecord.setValue('custbody_ts_tipo_de_cambio_presupuesto', exchangeRatePPTO.exchangeRate);
+            } 
+
+            if (scriptContext.newRecord.type == EXPENSE_REPORT) {
+                let symbol = objRecord.getValue({ fieldId: 'expensereportcurrency' });
+                //log.debug('Symbol', symbol);
                 let exchangeRatePPTO = _controller.getTipoCambio(symbol);
                 objRecord.setValue('custbody_ts_tipo_de_cambio_presupuesto', exchangeRatePPTO.exchangeRate);
             }
@@ -202,9 +210,13 @@ define([
         }
     }
 
+    
     return {
         beforeLoad: beforeLoad,
         beforeSubmit: beforeSubmit,
         afterSubmit: afterSubmit
     }
+
+
+
 });

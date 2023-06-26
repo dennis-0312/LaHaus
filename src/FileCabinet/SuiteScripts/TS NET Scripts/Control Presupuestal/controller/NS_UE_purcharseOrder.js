@@ -25,6 +25,7 @@ define(['N/log', 'N/record', 'N/search', 'N/error'], function (log, record, sear
     let typeMode = '';
     let cop = 0;
     let mxn = 0;
+    
     const beforeLoad = (scriptContext) => {
         const objRecord = scriptContext.newRecord;
         if (scriptContext.type === scriptContext.UserEventType.CREATE) {
