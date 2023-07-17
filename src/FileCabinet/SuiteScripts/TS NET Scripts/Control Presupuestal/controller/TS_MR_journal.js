@@ -54,9 +54,7 @@ define(['N/log', 'N/search', 'N/record', 'N/task', 'N/runtime'], function (log, 
 
                                 ]
                         });
-
                         let resultCount = presupuestado.runPaged().count;
-
                         if (resultCount != 0) {
                             oldcriterioControl = criterioControl
                             let result = presupuestado.run().getRange({ start: 0, end: 1 });
@@ -70,9 +68,8 @@ define(['N/log', 'N/search', 'N/record', 'N/task', 'N/runtime'], function (log, 
         } catch (e) {
             log.debug('Error-sysDate', e);
         }
-
-
     }
+    
     const sysDate = (date_param) => {
         try {
             let date = new Date(date_param);
@@ -87,6 +84,7 @@ define(['N/log', 'N/search', 'N/record', 'N/task', 'N/runtime'], function (log, 
             log.debug('Error-sysDate', e);
         }
     }
+
     function map(context) {
 
     }

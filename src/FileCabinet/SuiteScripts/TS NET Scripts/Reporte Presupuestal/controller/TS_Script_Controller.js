@@ -20,13 +20,165 @@ define(['N/log',
         const MXN = 5
 
         return ({
+            getAllPresupuestado: (fdesde, fhasta, arrayId) => {
+                let presupuestoResultJson = {};
+                let year = fdesde.split('/')[2];
+                let from = parseInt(fdesde.split('/')[1]);
+                let to = parseInt(fhasta.split('/')[1]);
+
+                let presupuestado = search.create({
+                    type: CATEGORIA_PERIODO_RECORD,
+                    filters: [
+                        ["custrecord_lh_detalle_cppto_status", "anyof", "1"],
+                        "AND",
+                        ["custrecord_lh_detalle_cppto_categoria", "anyof", arrayId],
+                        "AND",
+                        ["custrecord_lh_detalle_cppto_anio.name", "haskeywords", year]
+                    ],
+                    columns: [
+                        search.createColumn({ name: "custrecord_lh_detalle_cppto_categoria", label: "Mensual" }),
+                        search.createColumn({ name: "custrecord_lh_detalle_cppto_01", label: "Enero" }),
+                        search.createColumn({ name: "custrecord_lh_detalle_cppto_02", label: "Febrero" }),
+                        search.createColumn({ name: "custrecord_lh_detalle_cppto_03", label: "Marzo" }),
+                        search.createColumn({ name: "custrecord_lh_detalle_cppto_04", label: "Abril" }),
+                        search.createColumn({ name: "custrecord_lh_detalle_cppto_05", label: "Mayo" }),
+                        search.createColumn({ name: "custrecord_lh_detalle_cppto_06", label: "Junio" }),
+                        search.createColumn({ name: "custrecord_lh_detalle_cppto_07", label: "Julio" }),
+                        search.createColumn({ name: "custrecord_lh_detalle_cppto_08", label: "Agosto" }),
+                        search.createColumn({ name: "custrecord_lh_detalle_cppto_09", label: "Septiembre" }),
+                        search.createColumn({ name: "custrecord_lh_detalle_cppto_10", label: "Octubre" }),
+                        search.createColumn({ name: "custrecord_lh_detalle_cppto_11", label: "Noviembre" }),
+                        search.createColumn({ name: "custrecord_lh_detalle_cppto_12", label: "Diciembre" })
+                    ]
+                });
+
+                var pagedData = presupuestado.runPaged({ pageSize: 1000 });
+                if (pagedData.count <= 4000) {
+                    presupuestado.run().each(function (result) {
+                        let categoriaId = result.getValue("custrecord_lh_detalle_cppto_categoria");
+                        if (presupuestoResultJson[categoriaId] === undefined) presupuestoResultJson[categoriaId] = 0;
+                        for (let i = from; i <= to; i++) {
+                            let mes = i <= 9 ? `0${i}` : `${i}`;
+                            presupuestoResultJson[categoriaId] = presupuestoResultJson[categoriaId] + Number(result.getValue(`custrecord_lh_detalle_cppto_${mes}`));
+                            presupuestoResultJson[categoriaId] = Math.round(presupuestoResultJson[categoriaId] * 100) / 100;
+                        }
+                        return true;
+                    });
+                } else {
+                    pagedData.pageRanges.forEach(function (pageRange) {
+                        page = pagedData.fetch({ index: pageRange.index });
+                        page.data.forEach(function (result) {
+                            let categoriaId = result.getValue("custrecord_lh_detalle_cppto_categoria");
+                            if (presupuestoResultJson[categoriaId] === undefined) presupuestoResultJson[categoriaId] = 0;
+                            for (let i = from; i <= to; i++) {
+                                let mes = i <= 9 ? `0${i}` : `${i}`;
+                                presupuestoResultJson[categoriaId] = presupuestoResultJson[categoriaId] + Number(result.getValue(`custrecord_lh_detalle_cppto_${mes}`));
+                                presupuestoResultJson[categoriaId] = Math.round(presupuestoResultJson[categoriaId] * 100) / 100;
+                            }
+                        });
+                    });
+                }
+                return presupuestoResultJson;
+            },
+
+            getAllReservado: (fdesde, fhasta, arrayId) => {
+                log.error("pipipi", JSON.stringify({ fdesde, fhasta, arrayId }));
+                let reservadoResultJson = {};
+
+                let reservado = search.load({ id: RESERVADO_SEARCH });
+                let filters1 = reservado.filters;
+                const filterOne = search.createFilter({ name: 'trandate', operator: search.Operator.WITHIN, values: [fdesde, fhasta] });
+                filters1.push(filterOne);
+                const filterThree = search.createFilter({ name: 'custcol_lh_ppto_flag', operator: search.Operator.ANYOF, values: arrayId });
+                filters1.push(filterThree);
+
+                var pagedData = reservado.runPaged({ pageSize: 1000 });
+                if (pagedData.count <= 4000) {
+                    reservado.run().each(function (result) {
+                        let categoriaId = result.getValue(result.columns[0]);
+                        reservadoResultJson[categoriaId] = Number(result.getValue(result.columns[1]));
+                        return true;
+                    });
+                } else {
+                    pagedData.pageRanges.forEach(function (pageRange) {
+                        page = pagedData.fetch({
+                            index: pageRange.index
+                        });
+                        page.data.forEach(function (result) {
+                            let categoriaId = result.getValue(result.columns[0]);
+                            reservadoResultJson[categoriaId] = Number(result.getValue(result.columns[1]));
+                        });
+                    });
+                }
+                return reservadoResultJson;
+            },
+
+            getAllComprometido: (fdesde, fhasta, arrayId) => {
+                let comprometidoResultJson = {};
+
+                let comprometido = search.load({ id: COMPROMETIDO_SEARCH });
+                let filters1 = comprometido.filters;
+                const filterOne = search.createFilter({ name: 'trandate', operator: search.Operator.WITHIN, values: [fdesde, fhasta] });
+                filters1.push(filterOne);
+                const filterThree = search.createFilter({ name: 'custcol_lh_ppto_flag', operator: search.Operator.ANYOF, values: arrayId });
+                filters1.push(filterThree);
+                var pagedData = comprometido.runPaged({ pageSize: 1000 });
+
+                if (pagedData.count <= 4000) {
+                    comprometido.run().each(function (result) {
+                        let categoriaId = result.getValue(result.columns[0]);
+                        comprometidoResultJson[categoriaId] = Number(result.getValue(result.columns[1]));
+                        return true;
+                    });
+                } else {
+                    pagedData.pageRanges.forEach(function (pageRange) {
+                        page = pagedData.fetch({
+                            index: pageRange.index
+                        });
+                        page.data.forEach(function (result) {
+                            let categoriaId = result.getValue(result.columns[0]);
+                            comprometidoResultJson[categoriaId] = Number(result.getValue(result.columns[1]));
+                        });
+                    });
+                }
+                return comprometidoResultJson;
+            },
+
+            getAllEjecutado: (fdesde, fhasta, arrayId) => {
+                let ejecutadoResultJson = {};
+
+                let ejecutado = search.load({ id: EJECUTADO_SEARCH });
+                let filters1 = ejecutado.filters;
+                const filterOne = search.createFilter({ name: 'trandate', operator: search.Operator.WITHIN, values: [fdesde, fhasta] });
+                filters1.push(filterOne);
+                const filterThree = search.createFilter({ name: 'custcol_lh_ppto_flag', operator: search.Operator.ANYOF, values: arrayId });
+                filters1.push(filterThree);
+                var pagedData = ejecutado.runPaged({ pageSize: 1000 });
+
+                if (pagedData.count <= 4000) {
+                    ejecutado.run().each(function (result) {
+                        let categoriaId = result.getValue(result.columns[0]);
+                        ejecutadoResultJson[categoriaId] = Number(result.getValue(result.columns[1]));
+                        return true;
+                    });
+                } else {
+                    pagedData.pageRanges.forEach(function (pageRange) {
+                        page = pagedData.fetch({
+                            index: pageRange.index
+                        });
+                        page.data.forEach(function (result) {
+                            let categoriaId = result.getValue(result.columns[0]);
+                            ejecutadoResultJson[categoriaId] = Number(result.getValue(result.columns[1]));
+                        });
+                    });
+                }
+
+                return ejecutadoResultJson;
+            },
+
             getPresupuestado: (fdesde, fhasta, categoriappto) => {
                 let pre = 0;
-                // let adi = 0;
-                // let dis = 0;
                 let year = fdesde.split('/')[2];
-                //log.debug('Fecha,', fdesde);
-                //console.log('FechasInput',fdesde + '-' + fhasta);
                 //*PRESUPUESTADO =============================================================================================================================================================
                 const presupuestado = search.create({
                     type: CATEGORIA_PERIODO_RECORD,
@@ -57,7 +209,7 @@ define(['N/log',
                         if (i <= 9) {
                             i = '0' + i
                         }
-                        //console.log('I',i);
+                        //console.log('I', i);
                         let monto = parseFloat(recordLoad.getValue('custrecord_lh_detalle_cppto_' + i));
                         pre += monto
                     }
@@ -282,16 +434,16 @@ define(['N/log',
                 filters.push(filterFour);
 
                 let searchResultCount = ejecutadoSearch.runPaged().count;
-                log.debug('CountEje', searchResultCount);
+                //log.debug('CountEje', searchResultCount);
                 if (searchResultCount != 0) {
                     let result = ejecutadoSearch.run().getRange({ start: 0, end: 10 });
-                    log.debug('Result', result);
+                    //log.debug('Result', result);
                     ejecutado = parseFloat(result[0].getValue(ejecutadoSearch.columns[1]));
                 }
                 return ejecutado.toFixed(2);
             },
 
-            applyIncrease: (fecha, amout, partida) => {
+            applyIncrease: (fecha, amount, partida) => {
                 let success = 0;
                 let year = fecha.split('/')[2];
                 let month = parseInt(fecha.split('/')[1]);
@@ -317,7 +469,7 @@ define(['N/log',
                     let internalid = result[0].getValue(increase.columns[0]);
                     let recordLoad = record.load({ type: CATEGORIA_PERIODO_RECORD, id: internalid, isDynamic: true });
                     let presupuestado = parseFloat(recordLoad.getValue({ fieldId: 'custrecord_lh_detalle_cppto_' + month }));
-                    let suma = presupuestado + amout;
+                    let suma = presupuestado + amount;
                     recordLoad.setValue({ fieldId: 'custrecord_lh_detalle_cppto_' + month, value: suma });
                     recordLoad.save();
                     success = 1;
@@ -349,6 +501,7 @@ define(['N/log',
                 if (resultCount != 0) {
                     let result = decrease.run().getRange({ start: 0, end: 1 });
                     let internalid = result[0].getValue(decrease.columns[0]);
+                    //alert('Partida Decrease: ' + month);
                     let recordLoad = record.load({ type: CATEGORIA_PERIODO_RECORD, id: internalid, isDynamic: true });
                     let presupuestado = parseFloat(recordLoad.getValue({ fieldId: 'custrecord_lh_detalle_cppto_' + month }));
                     let suma = presupuestado - amout;
@@ -395,6 +548,26 @@ define(['N/log',
                     'fdesde': from,
                     'fhasta': to
                 }
+                // if (month == 1 || month == 3 || month == 5 || month == 7 || month == 8 || month == 10 || month == 12) {
+                //     from = "1/" + month + "/" + year;
+                //     to = "31/" + month + "/" + year;
+                // } else if (month == 4 || month == 6 || month == 9 || month == 11) {
+                //     from = "1/" + month + "/" + year;
+                //     to = "30/" + month + "/" + year;
+                // } else if (month == 2) {
+                //     from = "1/" + month + "/" + year;
+                //     to = "28/" + month + "/" + year;
+                // }
+
+                // if (from == 0 || to == 0) {
+                //     alert('Validar temporalidad, fechas.');
+                //     return false;
+                // }
+
+                // return {
+                //     'fdesde': from,
+                //     'fhasta': to
+                // }
             },
 
             getMonthly: (month, year) => {
@@ -470,7 +643,6 @@ define(['N/log',
                     // const filterTwo = search.createFilter({ name: 'custrecord_lh_tc_periodo', operator: search.Operator.ANYOF, values: internalidPeriod });
                     // filters.push(filterTwo);
                     let searchResultCount = objSearch.runPaged().count;
-
                     if (searchResultCount != 0) {
                         let result = objSearch.run().getRange({ start: 0, end: 5 });
                         //log.debug('result', result);
@@ -485,7 +657,76 @@ define(['N/log',
                 } else {
                     return { exchangeRate: exchangeRate }
                 }
+            },
 
-            }
+            getPresupuestado2: (fdesde, fhasta, categoriappto) => {
+                let pre = 0;
+                let year = fdesde.split('/')[2];
+                let from = parseInt(fdesde.split('/')[1]);
+                let to = parseInt(fhasta.split('/')[1]);
+                //*PRESUPUESTADO =============================================================================================================================================================
+                const presupuestado = search.create({
+                    type: CATEGORIA_PERIODO_RECORD,
+                    filters:
+                        [
+                            ["custrecord_lh_detalle_cppto_status", "anyof", "1"],
+                            "AND",
+                            ["custrecord_lh_detalle_cppto_categoria", "anyof", categoriappto],
+                            "AND",
+                            ["custrecord_lh_detalle_cppto_anio.name", "haskeywords", year]
+                        ],
+                    columns:
+                        [
+                            'internalid'
+                        ]
+                });
+                // let resultCount = presupuestado.runPaged().count;
+                // if (resultCount != 0) {
+                //     let result = presupuestado.run().getRange({ start: 0, end: 1 });
+                //     let internalid = result[0].getValue(presupuestado.columns[0]);
+                //     let recordLoad = record.load({ type: CATEGORIA_PERIODO_RECORD, id: internalid, isDynamic: true });
+                //     let from = parseInt(fdesde.split('/')[1]);
+                //     let to = parseInt(fhasta.split('/')[1]);
+                //     //console.log('Fechas',from + '-' + to);
+                //     for (let i = from; i <= to; i++) {
+                //         let mes = i <= 9 ? `0${i}` : `${i}`;
+                //         //console.log('I', i);
+                //         let monto = parseFloat(recordLoad.getValue('custrecord_lh_detalle_cppto_' + i));
+                //         pre += monto
+                //     }
+                // }
+                // let presupuesto = pre;
+
+
+                // let pagedData = reservado.runPaged({ pageSize: 1000 });
+                // if (pagedData.count <= 4000) {
+                //     presupuestado.run().each(result => {
+                //         let categoriaId = result.getValue("custrecord_lh_detalle_cppto_categoria");
+                //         if (presupuestoResultJson[categoriaId] === undefined) presupuestoResultJson[categoriaId] = 0;
+                //         for (let i = from; i <= to; i++) {
+                //             let mes = i <= 9 ? `0${i}` : `${i}`;
+                //             let monto = parseFloat(recordLoad.getValue('custrecord_lh_detalle_cppto_' + mes));
+                //             pre += monto
+                //         }
+                //         return true;
+                //     });
+                // } else {
+                //     pagedData.pageRanges.forEach(pageRange => {
+                //         page = pagedData.fetch({ index: pageRange.index });
+                //         page.data.forEach(result => {
+                //             let categoriaId = result.getValue("custrecord_lh_detalle_cppto_categoria");
+                //             if (presupuestoResultJson[categoriaId] === undefined) presupuestoResultJson[categoriaId] = 0;
+                //             for (let i = from; i <= to; i++) {
+                //                 let mes = i <= 9 ? `0${i}` : `${i}`;
+                //                 let monto = parseFloat(recordLoad.getValue('custrecord_lh_detalle_cppto_' + mes));
+                //                 pre += monto
+                //             }
+                //         });
+                //     });
+                // }
+                // let presupuesto = pre;
+                return presupuesto;
+            },
+
         });
     });

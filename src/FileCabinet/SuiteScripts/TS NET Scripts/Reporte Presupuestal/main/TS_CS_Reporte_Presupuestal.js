@@ -40,6 +40,38 @@ define(['N/url', 'N/currentRecord', 'N/ui/dialog', 'N/search'], (url, currentRec
         let categoryfilterFlag = context.currentRecord.getValue('custpage_categoria_flag');
         let accountfilterFlag = context.currentRecord.getValue('custpage_account_flag');
 
+        if (datefilterfrom && datefilterto) {
+            datefilterfrom = sysDate(datefilterfrom);
+            datefilterto = sysDate(datefilterto);
+
+            from = datefilterfrom;
+            to = datefilterto;
+            budget = budgetfilter;
+            costcenter = costcenterFilter
+            category = categoryFilter;
+            account = accountFilter;
+
+            let pageId = context.currentRecord.getValue({ fieldId: 'custpage_pageid' });
+            pageId = parseInt(pageId.split('_')[1]);
+            window.onbeforeunload = null;
+            document.location = url.resolveScript({
+                scriptId: getParameterFromURL('script'),
+                deploymentId: getParameterFromURL('deploy'),
+                params: {
+                    'page': pageId,
+                    'flag': 1,
+                    'from': from,
+                    'to': to,
+                    'budget': budget,
+                    'account': account,
+                    'category': category,
+                    'costcenter': costcenter
+                }
+            });
+
+        }
+
+        /*
         if (datefilterfrom.length != 0 && datefilterto.length != 0) {
             budget = budgetfilter != -1 ? budgetfilter : budgetfilterFlag;
             costcenter = costcenterFilter != -1 ? costcenterFilter : costcenterfilterFlag;
@@ -164,7 +196,7 @@ define(['N/url', 'N/currentRecord', 'N/ui/dialog', 'N/search'], (url, currentRec
                 }
             });
         }
-
+*/
         // else if (context.fieldId == 'custpage_pageid' && datefilterfrom.length != 0 && datefilterto.length != 0) {
         //     filter3 = carPlate.length != 0 ? carPlate : custpage_car_plate_flag;
         //     filter4 = ovfilter != -1 ? ovfilter : custpage_ov_flag;

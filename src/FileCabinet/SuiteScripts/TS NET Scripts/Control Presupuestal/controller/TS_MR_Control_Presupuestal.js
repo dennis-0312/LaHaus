@@ -28,7 +28,7 @@ define(['N/log', 'N/search', 'N/record', 'N/task', 'N/runtime'], (log, search, r
             let numLines = objRecord.getLineCount({ sublistId: 'item' });
             for (let i = 0; i < numLines; i++) {
                 let status = objRecord.getSublistValue({ sublistId: 'item', fieldId: 'custcol_lh_approval_status', line: i });
-             
+
                 if (status == PENDING_APPROVAL) {
                     objRecord.setSublistValue({ sublistId: 'item', fieldId: 'custcol_lh_approval_status', line: i, value: APPROVAL });
                     let item = objRecord.getSublistText({ sublistId: 'item', fieldId: 'item', line: i });
@@ -83,27 +83,27 @@ define(['N/log', 'N/search', 'N/record', 'N/task', 'N/runtime'], (log, search, r
                 //     log.debug('Records', records[i]);
                 // }
                 log.debug('Records', records[0]);
-               
+
             });
-           
+
             ;
             var arrCustomerId = new Array();
             var busqueda = search.create({
                 type: "customrecord_cola_aprobacion",
                 filters:
-                [
-                    search.createFilter({
-                        name: 'custrecord_estado',
-                        operator: search.Operator.HASKEYWORDS,
-                        values: 'Pendientes Aprobar'
-                    })
-                ],
+                    [
+                        search.createFilter({
+                            name: 'custrecord_estado',
+                            operator: search.Operator.HASKEYWORDS,
+                            values: 'Pendientes Aprobar'
+                        })
+                    ],
                 columns:
-                [
-                   search.createColumn({name: "internalid", label: "ID"})
-                ]
-             });
-             var pageData = busqueda.runPaged({
+                    [
+                        search.createColumn({ name: "internalid", label: "ID" })
+                    ]
+            });
+            var pageData = busqueda.runPaged({
                 pageSize: 1000
             });
             pageData.pageRanges.forEach(function (pageRange) {
@@ -118,16 +118,16 @@ define(['N/log', 'N/search', 'N/record', 'N/task', 'N/runtime'], (log, search, r
                         arrCustomer[0] = result.getValue(columns[0]);
                     else
                         arrCustomer[0] = '';
-                        arrCustomerId.push(arrCustomer);
-                    });
+                    arrCustomerId.push(arrCustomer);
+                });
             });
-            arrCustomerId.map(items=>{
-                let customer = record.load({ type:'customrecord_cola_aprobacion', id:items[0]});
-                let orden = customer.getValue({fieldId:'custrecord_orden_compra'});
-                customer.setValue({fieldId:'custrecord_estado',value: 'Procesando'});
+            arrCustomerId.map(items => {
+                let customer = record.load({ type: 'customrecord_cola_aprobacion', id: items[0] });
+                let orden = customer.getValue({ fieldId: 'custrecord_orden_compra' });
+                customer.setValue({ fieldId: 'custrecord_estado', value: 'Procesando' });
                 customer.save();
-               
-                try{
+
+                try {
                     let mapReduceScript = task.create({ taskType: task.TaskType.MAP_REDUCE });
                     mapReduceScript.scriptId = 'customscript_ts_mr_control_presupuestal';
                     mapReduceScript.deploymentId = 'customdeploy_ts_mr_control_presupuestal';
@@ -135,16 +135,16 @@ define(['N/log', 'N/search', 'N/record', 'N/task', 'N/runtime'], (log, search, r
                         'custscript_param_purchase_order': orden,
                     };
                     let mapReduceTaskId = mapReduceScript.submit();
-    
-                    customer = record.load({ type:'customrecord_cola_aprobacion', id:items[0]});
-                    customer.setValue({fieldId:'custrecord_estado',value: 'Culminado'});
+
+                    customer = record.load({ type: 'customrecord_cola_aprobacion', id: items[0] });
+                    customer.setValue({ fieldId: 'custrecord_estado', value: 'Culminado' });
                     customer.save();
                 } catch (error) {
-                    customer = record.load({ type:'customrecord_cola_aprobacion', id:items[0]});
-                    customer.setValue({fieldId:'custrecord_estado',value: 'Pendientes Aprobar'});
+                    customer = record.load({ type: 'customrecord_cola_aprobacion', id: items[0] });
+                    customer.setValue({ fieldId: 'custrecord_estado', value: 'Pendientes Aprobar' });
                     customer.save();
                     log.error('Error-getInputData', error);
-                    
+
                 }
             })
             return true;

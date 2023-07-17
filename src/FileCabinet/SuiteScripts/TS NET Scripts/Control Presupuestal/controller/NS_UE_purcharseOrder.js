@@ -2,7 +2,14 @@
  *@NApiVersion 2.1
  *@NScriptType UserEventScript
  */
-define(['N/log', 'N/record', 'N/search', 'N/error'], function (log, record, search, error) {
+define(['N/log',
+    'N/record',
+    'N/search',
+    'N/error',
+    'N/runtime',
+    'N/task',
+    '../../Reporte Presupuestal/controller/TS_Script_Controller'
+], function (log, record, search, error, runtime, task, _controller) {
     const CONFIG_PPTO_SEARCH = 'customsearch_co_config_presupuestal';
     const CONTROL_PRESUPUESTAL_RESERVADO_PO = 'customsearch_control_ppto_reservado_po'; //Control Presupuestal RESERVADO PO - PRODUCCIÓN
     const CONTROL_PRESUPUESTAL_RESERVADO_ER = 'customsearch_control_ppto_reservado_er'; //Control Presupuestal RESERVADO ER - PRODUCCIÓN
@@ -21,11 +28,12 @@ define(['N/log', 'N/record', 'N/search', 'N/error'], function (log, record, sear
     const CECO_NIVEL_CONTROL = 1;
     const CUENTA_NIVEL_CONTROL = 2;
     const CATEGORIA_NIVEL_CONTROL = 3;
-
+    const PARTIDA_PRESUPUESTAL_SEARCH = 'customsearch_partida_presupuestal'; //Partida Presupuestal - PRODUCCION
+    let generalSolicitud = new Array();
     let typeMode = '';
     let cop = 0;
     let mxn = 0;
-    
+
     const beforeLoad = (scriptContext) => {
         const objRecord = scriptContext.newRecord;
         if (scriptContext.type === scriptContext.UserEventType.CREATE) {
@@ -37,7 +45,7 @@ define(['N/log', 'N/record', 'N/search', 'N/error'], function (log, record, sear
                     objRecord.setValue('custbody_lh_nivel_control_flag', config.nivelControl);
                     objRecord.setValue('custbody_lh_desviacion_flag', config.desviacion);
                 }
-                log.debug('Error: ' + config);
+                //log.debug('Error: ' + config);
             } catch (error) {
                 log.debug('Error-BL', error);
             }
@@ -50,37 +58,40 @@ define(['N/log', 'N/record', 'N/search', 'N/error'], function (log, record, sear
         let importacion = objRecord.getValue('custbody_lh_importacion_csv');
         if (importacion) {
             if (scriptContext.type === scriptContext.UserEventType.CREATE) {
-                let tipoCambio = getTipoCambio();
-
-                if (tipoCambio.co == 0 || tipoCambio.mx == 0) {
-                    var myCustomError = error.create({
-                        name: 'EventError',
-                        message: 'No se encuentra un tipo de cambio',
-                        notifyOff: false
-                    });
-                    throw myCustomError;
-                } else {
-                    cop = tipoCambio.co;
-                    mxn = tipoCambio.mx;
-                }
-                let json = new Array();
-                let msgCriterio = '';
+                // let tipoCambio = getTipoCambio();
+                // if (tipoCambio.co == 0 || tipoCambio.mx == 0) {
+                //     var myCustomError = error.create({ name: 'EventError', message: 'No se encuentra un tipo de cambio', notifyOff: false });
+                //     throw myCustomError;
+                // } else {
+                //     cop = tipoCambio.co;
+                //     mxn = tipoCambio.mx;
+                // }
                 let msgVacio = ''
+                let idpartida;
                 let temporalidad = objRecord.getValue('custbody_lh_temporalidad_flag');
-                var numLines = objRecord.getLineCount({ sublistId: 'item' });
+                let numLines = objRecord.getLineCount({ sublistId: 'item' });
+                let currency = objRecord.getValue('currency');
+                let exchangeRate = _controller.getTipoCambio(currency);
+                let limitExceeded = 0;
+                let linea = 0
 
                 for (let i = 0; i < numLines; i++) {
-                    log.debug('numLines', i);
+                    let remainingUsage = runtime.getCurrentScript().getRemainingUsage();
+                    log.debug('remainingUsage', remainingUsage + ' - ' + i);
+                    if (remainingUsage <= 200) {
+                        log.debug('Límite Excedido: ', remainingUsage + ' - ' + i);
+                        limitExceeded = 1
+                        linea = i
+                        break;
+                    }
                     if (temporalidad != 0) {
                         let status = objRecord.getSublistValue({ sublistId: 'item', fieldId: 'custcol_lh_approval_status', line: i });
-
                         if (status == 1) {
                             let nivelControl = parseInt(objRecord.getValue('custbody_lh_nivel_control_flag'));
-                            log.debug('nivelControl', nivelControl);
-                            let desviacion = objRecord.getValue('custbody_lh_desviacion_flag');
+                            //let desviacion = objRecord.getValue('custbody_lh_desviacion_flag');
                             let date = objRecord.getValue({ fieldId: 'trandate' });
                             date = sysDate(date); //! sysDate (FUNCTION)
-                            // console.log(date);
+                            let year = date.year
 
                             let month = date.month;
                             let criterioControl = objRecord.getSublistValue({ sublistId: 'item', fieldId: 'department', line: i });
@@ -97,17 +108,10 @@ define(['N/log', 'N/record', 'N/search', 'N/error'], function (log, record, sear
                                 case CATEGORIA_NIVEL_CONTROL:
                                     msgVacio = 'Debe ingresar un centro de costo.';
                                     if (criterioControlCategoria.length == 0) {
-                                        var myCustomError = error.create({
-                                            name: 'EventError',
-                                            message: 'Debe ingresar una categoría',
-                                            notifyOff: false
-                                        });
+                                        var myCustomError = error.create({ name: 'EventError', message: 'Debe ingresar una categoría', notifyOff: false });
                                         throw myCustomError;
-
                                     }
-
                                     msgCriterio = 'No tiene presupuesto para este centro de costo.';
-
                                     break;
                                 default:
                                     msgCriterio = 'Revisar la configuración del Nivel de Control.'
@@ -115,46 +119,96 @@ define(['N/log', 'N/record', 'N/search', 'N/error'], function (log, record, sear
                             }
 
                             if (criterioControl.length == 0) {
-                                var myCustomError = error.create({
-                                    name: 'EventError',
-                                    message: msgVacio,
-                                    notifyOff: false
-                                });
+                                var myCustomError = error.create({ name: 'EventError', message: msgVacio, notifyOff: false });
                                 throw myCustomError;
                             }
+
                             let quantity = parseInt(objRecord.getSublistValue({ sublistId: 'item', fieldId: 'quantity', line: i }));
                             let quantityBilled = objRecord.getSublistValue({ sublistId: 'item', fieldId: 'quantitybilled', line: i });
-
                             quantityBilled = typeof quantityBilled == 'undefined' ? 0 : parseInt(quantityBilled);
-
                             let rate = parseFloat(objRecord.getSublistValue({ sublistId: 'item', fieldId: 'rate', line: i }));
-                            let solicitud = (quantity - quantityBilled) * rate;
-
+                            let solicitud = + ((quantity - quantityBilled) * rate) / exchangeRate.exchangeRate;
                             json = [criterioControl, quantity, quantityBilled, rate, status];
 
-
-                            let disponible = getDisponible(temporalidad, month, date.year, criterioControl, objRecord, i); //! getDisponible (FUNCTION)
-
-
-                            log.debug('solicitud', solicitud);
-                            log.debug('disponible', disponible);
-                            if (disponible <= solicitud) {
-                                i = i + 1;
-                                var myCustomError = error.create({
-                                    name: 'EventError',
-                                    message: 'No Tienes presupuesto disponible en la linea ' + i,
-                                    notifyOff: false
-                                });
-                                throw myCustomError;
-
+                            if (temporalidad == TEMPORALIDAD_TRIMESTRAL) {
+                                //!const trimestre = [['01', '02', '03'], ['04', '05', '06'], ['07', '08', '09'], ['10', '11', '12']];
+                                for (let i in arregloTrimestre) {
+                                    let bloque = arregloTrimestre[i].includes(month.toString());
+                                    if (bloque == true) {
+                                        tempo = parseInt(i);
+                                        break;
+                                    }
+                                }
+                                rangeDates = _controller.getQuaterly(tempo, year);
+                            } else if (temporalidad == TEMPORALIDAD_MENSUAL) {
+                                rangeDates = _controller.getMonthly(parseInt(month), year);
                             }
 
+                            let partidaSearch = search.load({ id: PARTIDA_PRESUPUESTAL_SEARCH });
+                            let filters = partidaSearch.filters;
+                            const filterDepartment = search.createFilter({ name: 'custrecord_lh_cp_centro_costo', operator: search.Operator.ANYOF, values: criterioControl });
+                            filters.push(filterDepartment);
+                            if (nivelControl == CATEGORIA_NIVEL_CONTROL) {
+                                const filterCategory = search.createFilter({ name: 'custrecord_lh_cp_nombre_categoria', operator: search.Operator.ANYOF, values: categoriaControl });
+                                filters.push(filterCategory);
+                            }
+
+                            let searchResultCount = partidaSearch.runPaged().count;
+                            if (searchResultCount != 0) {
+                                let result = partidaSearch.run().getRange({ start: 0, end: 1 });
+                                idpartida = result[0].getValue({ name: "internalid" });
+                            }
+
+                            let presupuestado = _controller.getPresupuestado(rangeDates.fdesde, rangeDates.fhasta, idpartida);
+                            let reservado = _controller.getReservado(rangeDates.fdesde, rangeDates.fhasta, idpartida);
+                            let comprometido = _controller.getComprometido(rangeDates.fdesde, rangeDates.fhasta, idpartida);
+                            let ejecutado = _controller.getEjecutado(rangeDates.fdesde, rangeDates.fhasta, idpartida);
+                            let disponible = parseFloat(presupuestado) - (parseFloat(reservado) + parseFloat(comprometido) + parseFloat(ejecutado));
+                            let tengodisponible = disponible - solicitud;
+
+                            log.debug('Debug', 'IDPartida: ' + idpartida + 'presupuestado: ' + presupuestado + ' - ' + 'solicitud: ' + solicitud + ' - ' + 'disponible: ' + disponible + ' - ' + 'tengodisponible: ' + tengodisponible);
+                            objRecord.setSublistValue({ sublistId: 'item', fieldId: 'custcol_lh_ppto_flag', value: idpartida, line: i });
+
+                            if (disponible <= solicitud) {
+                                i = i + 1;
+                                var myCustomError = error.create({ name: 'EventError', message: 'No Tienes presupuesto disponible en la linea ' + i, notifyOff: false });
+                                throw myCustomError;
+                            }
                         }
-
-
                     }
                 }
 
+                if (limitExceeded == 1) {
+                    log.debug('Map Reduce', 'Ejecutará MR');
+                    objRecord.setValue({ fieldId: 'custbody_run_mapreduce', value: true });
+                    objRecord.setValue({ fieldId: 'custbody_run_mapreduce_linea', value: linea });
+                }
+            }
+        }
+    }
+
+    function afterSubmit(scriptContext) {
+        const objRecord = scriptContext.newRecord;
+        let importacion = objRecord.getValue('custbody_lh_importacion_csv');
+        // let runMapReduce = objRecord.getValue({ fieldId: 'custbody_run_mapreduce' });
+        let numLines = objRecord.getLineCount({ sublistId: 'item' });
+        let linea = objRecord.getValue({ fieldId: 'custbody_run_mapreduce_linea' });
+        if (linea.length == 0) {
+            linea = 0
+        }
+        log.debug('Lineas', numLines + ' - ' + linea);
+        if (importacion == true) {
+            if (numLines > linea) {
+                log.debug('Map Reduce', 'Ejecuto MR: ' + objRecord.id);
+                let scriptTask = task.create({ taskType: task.TaskType.SCHEDULED_SCRIPT });
+                scriptTask.scriptId = 'customscript_ts_ss_purchaseorder';
+                scriptTask.deploymentId = 'customdeploy_ts_ss_purchaseorder';
+                scriptTask.params = {
+                    'custscript_param_purchaseorder': objRecord.id,
+                    'custscript_param_purchaseorder_line': linea
+                };
+                let scriptTaskId = scriptTask.submit();
+                log.debug('TokenTask', scriptTaskId);
             }
         }
     }
@@ -620,11 +674,11 @@ define(['N/log', 'N/record', 'N/search', 'N/error'], function (log, record, sear
                 year: year
             }
         } catch (e) {
-            console.log('Error-sysDate', e);
+            log.debug('Error-sysDate', e);
         }
     }
 
-    
+
     const getConfig = (transaction) => {
         try {
             let objSearch = search.load({ id: CONFIG_PPTO_SEARCH });
@@ -655,7 +709,9 @@ define(['N/log', 'N/record', 'N/search', 'N/error'], function (log, record, sear
 
     return {
         beforeLoad: beforeLoad,
-        beforeSubmit: beforeSubmit
+        //beforeSubmit: beforeSubmit,
+        afterSubmit: afterSubmit
+
     }
 });
 

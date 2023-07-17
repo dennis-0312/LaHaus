@@ -22,9 +22,11 @@ define([
     'N/task',
     'N/record',
     'N/config',
+    'N/url',
+    'N/format',
     '../controller/TS_Script_Controller'
 ],
-    (serverWidget, search, redirect, log, runtime, task, record, config, _Controller) => {
+    (serverWidget, search, redirect, log, runtime, task, record, config, url, format, _Controller) => {
         const PAGE_SIZE = 500;
         const SEARCH_ID = 'customsearch_co_cate_ppto_estados_rp'; //CO Categoria PPTO Estados - RP PRODUCCION
         const SEARCH2_ID = 'customsearch_co_log_report_ppto_rp'; //CO Log Report PPTO - RP PRODUCCION
@@ -38,7 +40,8 @@ define([
         const COMPROMETIDO = 'Comprometido';
         const EJECUTADO = 'Ejecutado';
         const PAGADO = 'Pagado';
-        const URL_DETALLE_SEARCH = '/app/common/search/searchresults.nl?searchid=' //+####&whence=
+        //const URL_DETALLE_SEARCH = '/app/common/search/searchresults.nl?searchid=' //+####&whence=
+        const URL_DETALLE_SEARCH = '/app/common/search/searchresults.nl';
         const ID_BUSQUEDA_DETALLE_RESERVADO = 5200 //SB-5200 --- PR-?
         const ID_BUSQUEDA_DETALLE_COMPROMETIDO = 5202 //SB-5200 --- PR-?
         const ID_BUSQUEDA_DETALLE_EJECUTADO = 5203 //SB-5200 --- PR-?
@@ -118,8 +121,13 @@ define([
                     //*=================================================================
 
                     //?Fields ==========================================================================================================================================================================
-                    form.addFieldGroup({ id: 'groupFilters', label: 'Filtros' });
-                    let fdesde = form.addField({ id: 'custpage_date_from', type: serverWidget.FieldType.DATE, label: 'DESDE-' + parametros.fdesdetxt, container: 'groupFilters' });
+                    form.addFieldGroup({ id: 'groupPeriodo', label: 'Periodo' });
+                    let fdesde = form.addField({ id: 'custpage_date_from', type: serverWidget.FieldType.DATE, label: 'DESDE-' + parametros.fdesdetxt, container: 'groupPeriodo' });
+                    let fhasta = form.addField({ id: 'custpage_date_to', type: serverWidget.FieldType.DATE, label: 'HASTA-' + parametros.fhastatxt, container: 'groupPeriodo' });
+                    fdesde.defaultValue = formatDate(parametros.fdesde);
+                    fhasta.defaultValue = formatDate(parametros.fhasta);
+
+                    form.addFieldGroup({ id: 'groupFilters', label: 'Segmentación' });
 
                     let selectCeco = form.addField({ id: 'custpage_centro_costo', type: serverWidget.FieldType.SELECT, label: 'CENTRO DE COSTO - ', container: 'groupFilters' });
                     selectCeco.addSelectOption({ value: vacio, text: 'Seleccione...' });
@@ -130,8 +138,8 @@ define([
                         selectCeco.addSelectOption({ value: val, text: txt });
                         return true;
                     });
+                    selectCeco.defaultValue = parametros.ceco;
 
-                    let fhasta = form.addField({ id: 'custpage_date_to', type: serverWidget.FieldType.DATE, label: 'HASTA-' + parametros.fhastatxt, container: 'groupFilters' });
 
                     let selectCategoria = form.addField({ id: 'custpage_categoria', type: serverWidget.FieldType.SELECT, label: 'CATEGORIA - ', container: 'groupFilters' });
                     selectCategoria.addSelectOption({ value: vacio, text: 'Seleccione...' });
@@ -142,6 +150,8 @@ define([
                         selectCategoria.addSelectOption({ value: val, text: txt });
                         return true;
                     });
+                    selectCategoria.defaultValue = parametros.categoria;
+
 
                     let selectPartida = form.addField({ id: 'custpage_categoria_presupuesto', type: serverWidget.FieldType.SELECT, label: 'PARTIDA DE PRESUPUESTO', container: 'groupFilters' });
                     selectPartida.addSelectOption({ value: vacio, text: 'Seleccione...' });
@@ -152,6 +162,8 @@ define([
                         selectPartida.addSelectOption({ value: val, text: txt });
                         return true;
                     });
+                    selectPartida.defaultValue = parametros.partida;
+
                     //selectAccount.defaultValue = 4219;
 
                     let selectCuenta = form.addField({ id: 'custpage_cuenta', type: serverWidget.FieldType.SELECT, label: 'CUENTA - ', container: 'groupFilters' });
@@ -163,6 +175,8 @@ define([
                         selectCuenta.addSelectOption({ value: val, text: txt });
                         return true;
                     });
+                    selectCuenta.defaultValue = parametros.cuenta;
+
                     //selectAccount.defaultValue = 4219;
                     //?FLAGS ==========================================================================================================================================================================
                     let field_partida_flag = form.addField({ id: 'custpage_categoriappto_flag', type: serverWidget.FieldType.TEXT, label: "PARTIDA FLAG", container: 'groupFilters' });
@@ -203,19 +217,19 @@ define([
                     //?=================================================================================================================================================================================
                     form.addFieldGroup({ id: 'groupDetails', label: 'Link Detalles' });
                     let urlReservado = form.addField({ id: 'field_urlreservado', type: serverWidget.FieldType.INLINEHTML, label: ' ', container: 'groupDetails' })
-                    urlReservado.defaultValue = "<div style='font-size:14px;padding-top:20px;'><a href=" + URL + URL_DETALLE_SEARCH + ID_BUSQUEDA_DETALLE_RESERVADO + "&whence=" + " target='_blank' style='color:#1a6ece;'>Detalle Reservado</a></div>";
+                    urlReservado.defaultValue = "<div style='font-size:14px;padding-top:20px;'><a href=" + getUrlWithParams(URL + URL_DETALLE_SEARCH, ID_BUSQUEDA_DETALLE_RESERVADO, parametros, 'reservado') + "&whence=" + " target='_blank' style='color:#1a6ece;'>Detalle Reservado</a></div>";
 
                     let urlAdicion = form.addField({ id: 'field_urladicion', type: serverWidget.FieldType.INLINEHTML, label: ' ', container: 'groupDetails' })
-                    urlAdicion.defaultValue = "<div style='font-size:14px;padding-top:20px;'><a href=" + URL + URL_DETALLE_SEARCH + ID_BUSQUEDA_ADICION + "&whence=" + " target='_blank' style='color:#1a6ece;'>Detalle Adición</a></div>";
+                    urlAdicion.defaultValue = "<div style='font-size:14px;padding-top:20px;'><a href=" + getUrlWithParams(URL + URL_DETALLE_SEARCH, ID_BUSQUEDA_ADICION, parametros, 'adicion') + "&whence=" + " target='_blank' style='color:#1a6ece;'>Detalle Adición</a></div>";
 
                     let urlComprometido = form.addField({ id: 'field_urlcomprometido', type: serverWidget.FieldType.INLINEHTML, label: ' ', container: 'groupDetails' })
-                    urlComprometido.defaultValue = "<div style='font-size:14px;padding-top:20px;'><a href=" + URL + URL_DETALLE_SEARCH + ID_BUSQUEDA_DETALLE_COMPROMETIDO + "&whence=" + " target='_blank' style='color:#1a6ece;'>Detalle Comprometido</a></div>";
+                    urlComprometido.defaultValue = "<div style='font-size:14px;padding-top:20px;'><a href=" + getUrlWithParams(URL + URL_DETALLE_SEARCH, ID_BUSQUEDA_DETALLE_COMPROMETIDO, parametros, 'comprometido') + "&whence=" + " target='_blank' style='color:#1a6ece;'>Detalle Comprometido</a></div>";
 
                     let urlDisminucion = form.addField({ id: 'field_urldisminucion', type: serverWidget.FieldType.INLINEHTML, label: ' ', container: 'groupDetails' })
-                    urlDisminucion.defaultValue = "<div style='font-size:14px;padding-top:20px;'><a href=" + URL + URL_DETALLE_SEARCH + ID_BUSQUEDA_DISMINUCION + "&whence=" + " target='_blank' style='color:#1a6ece;'>Detalle Disminución</a></div>";
+                    urlDisminucion.defaultValue = "<div style='font-size:14px;padding-top:20px;'><a href=" + getUrlWithParams(URL + URL_DETALLE_SEARCH, ID_BUSQUEDA_DISMINUCION, parametros, 'disminucion') + "&whence=" + " target='_blank' style='color:#1a6ece;'>Detalle Disminución</a></div>";
 
                     let urlEjecutado = form.addField({ id: 'field_urlejecutado', type: serverWidget.FieldType.INLINEHTML, label: ' ', container: 'groupDetails' })
-                    urlEjecutado.defaultValue = "<div style='font-size:14px;padding-top:20px;'><a href=" + URL + URL_DETALLE_SEARCH + ID_BUSQUEDA_DETALLE_EJECUTADO + "&whence=" + " target='_blank' style='color:#1a6ece;'>Detalle Ejecutado</a></div>";
+                    urlEjecutado.defaultValue = "<div style='font-size:14px;padding-top:20px;'><a href=" + getUrlWithParams(URL + URL_DETALLE_SEARCH, ID_BUSQUEDA_DETALLE_EJECUTADO, parametros, 'ejecutado') + "&whence=" + " target='_blank' style='color:#1a6ece;'>Detalle Ejecutado</a></div>";
                     //?=================================================================================================================================================================================
                     //*Tabs and Sub Tabs ===============================================
                     form.addTab({ id: 'custpage_sample_tab1', label: 'Presupuestos' });
@@ -296,7 +310,7 @@ define([
                     form.addButton({ id: 'btnClean', label: 'Limpiar Filtros', functionName: 'cancelarFiltros' });
                     scriptContext.response.writePage(form);
                 } else {
-                    // let sublistData = scriptContext.request.parameters.sublistdata;
+                    //let sublistData = scriptContext.request.parameters.sublistdata;
                     // let json = new Array();
                     // json = {
                     //     'custscript_year_rp': scriptContext.request.parameters.custpage_filter_year_rp_flag,
@@ -316,15 +330,69 @@ define([
                     //     deploymentId: 'customdeploy_ts_ui_reporte_rp_report',
                     //     parameters: {}
                     // });
-                    // let pruebaFunc = _Controller.test_set_getValue();
-                    // log.debug('pruebaFunc', pruebaFunc);
-                    // scriptContext.response.write(pruebaFunc);
+                    let pruebaFunc = _Controller.test_set_getValue();
+                    log.debug('pruebaFunc', pruebaFunc);
+                    scriptContext.response.write(pruebaFunc);
                 }
             } catch (error) {
                 log.error('Error-onRequest', error);
             }
         }
 
+        const formatDate = (value) => {
+            if (!value) return "";
+            return format.parse({
+                type: format.Type.DATE,
+                value: value
+            })
+        }
+
+        const getUrlWithParams = (domain, searchId, parameters, type) => {
+            var params = {
+                searchid: searchId
+            };
+            var mapParams = {
+                partida: "CUSTCOL_LH_PPTO_FLAG",
+                cuenta: "Transaction_ACCOUNT",
+                categoria: "CUSTCOL_LH_CATEGORIA_PPTO_OC",
+                ceco: "Transaction_DEPARTMENT",
+                fdesde: "Transaction_TRANDATEfrom",
+                fhasta: "Transaction_TRANDATEto"
+            };
+            if (type != "adicion" && type != "disminucion") {
+                for (var param in mapParams) {
+                    if (parameters[param] && parameters[param] != -1) {
+                        params[mapParams[param]] = parameters[param];
+                    }
+                }
+                if (parameters.fdesde || parameters.fhasta) {
+                    params["Transaction_TRANDATE"] = "CUSTOM";
+                }
+            } else {
+                let isCustom = false;
+                if (parameters.fdesde) {
+                    params["CUSTRECORD_LH_DETALLE_CPPTO_FECHA_ADIfrom"] = parameters.fdesde;
+                    isCustom = true;
+                }
+                if (parameters.fhasta) {
+                    params["CUSTRECORD_LH_DETALLE_CPPTO_FECHA_ADIto"] = parameters.fhasta;
+                    isCustom = true;
+                }
+                if (isCustom) {
+                    params["CUSTRECORD_LH_DETALLE_CPPTO_FECHA_ADI"] = "CUSTOM";
+                }
+                if (parameters.partida) {
+                    if (type == "adicion"){
+                        params["CUSTRECORD_LH_DETALLE_CPPTO_PARTIDA_ADI"] = parameters.partida;
+    
+                    } else {
+                        params["CUSTRECORD_LH_DETALLE_CPPTO_PARTIDA_DIS"] = parameters.partida;                    
+                    }
+                }
+            }
+            let newUrl = url.format({ domain, params });
+            return newUrl;
+        }
 
         const runSearch = (searchId, searchPageSize, flag, budget, costcenter, category, account) => {//&& param3.length != 0
             log.debug('PARAMS', budget + '-' + costcenter + '-' + category + '-' + account)
@@ -357,19 +425,26 @@ define([
         const fetchSearchResult = (pagedData, pageIndex, parametros) => {
             let searchPage = pagedData.fetch({ index: pageIndex });
             let results = new Array();
+            let internalIdArray = [];
+            let resultJson = {};
             searchPage.data.forEach((result) => {
                 let internalid = result.getValue({ name: 'internalid' });
                 // log.debug('PARTIDA', internalid);
                 let name = result.getValue({ name: 'name' });
+                
+                /*
                 let presupuestado = _Controller.getPresupuestado(parametros.fdesde, parametros.fhasta, internalid);
-                // log.debug('Presupuestado', presupuestado);
                 let reservado = _Controller.getReservado(parametros.fdesde, parametros.fhasta, internalid);
-                // log.debug('Reservado', reservado);
                 let comprometido = _Controller.getComprometido(parametros.fdesde, parametros.fhasta, internalid);
-                // log.debug('Presupuestado', comprometido);
                 let ejecutado = _Controller.getEjecutado(parametros.fdesde, parametros.fhasta, internalid);
-                log.debug('Presupuestado', ejecutado);
                 let disponible = parseFloat(presupuestado) - (parseFloat(reservado) + parseFloat(comprometido) + parseFloat(ejecutado));
+                */
+                resultJson[internalid] = {
+                    internalid,
+                    categoriappto: name
+                }
+                
+                /*
                 results.push({
                     'internalid': internalid,
                     'categoriappto': name,
@@ -378,8 +453,27 @@ define([
                     'comprometido': comprometido,
                     'ejecutado': ejecutado,
                     'disponible': disponible
-                });
+                });*/
+                internalIdArray.push(internalid);
+
             });
+            let presupuestado = _Controller.getAllPresupuestado(parametros.fdesde, parametros.fhasta, internalIdArray);
+            let reservado = _Controller.getAllReservado(parametros.fdesde, parametros.fhasta, internalIdArray);
+            let comprometido = _Controller.getAllComprometido(parametros.fdesde, parametros.fhasta, internalIdArray);
+            let ejecutado = _Controller.getAllEjecutado(parametros.fdesde, parametros.fhasta, internalIdArray);
+            log.error("presupuestado", presupuestado);
+            log.error("reservado", reservado);
+            log.error("comprometido", comprometido);
+            log.error("ejecutado", ejecutado);
+
+            for (let categoriaId in resultJson) {
+                resultJson[categoriaId].presupuestado = presupuestado[categoriaId] || 0;
+                resultJson[categoriaId].reservado = reservado[categoriaId] || 0;
+                resultJson[categoriaId].comprometido = comprometido[categoriaId] || 0;
+                resultJson[categoriaId].ejecutado = ejecutado[categoriaId] || 0;
+                resultJson[categoriaId].disponible = resultJson[categoriaId].presupuestado - (resultJson[categoriaId].reservado + resultJson[categoriaId].comprometido + resultJson[categoriaId].ejecutado);
+                results.push(resultJson[categoriaId]);
+            }
             return results;
         }
 

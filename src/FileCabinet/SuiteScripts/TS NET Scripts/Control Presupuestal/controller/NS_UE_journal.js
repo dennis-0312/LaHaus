@@ -17,6 +17,8 @@ define([
     const CUENTA_NIVEL_CONTROL = 2;
     const CATEGORIA_NIVEL_CONTROL = 3;
     const CONFIG_PPTO_SEARCH = 'customsearch_co_config_presupuestal'; //CO Configuración Presupuestal Search - CP PRODUCCION
+    const mapReduceScriptId = 'customscript_ts_mr_journal'
+    const custdeploy1 = 'customdeploy_ts_journal'
 
     const beforeLoad = (scriptContext) => {
         const objRecord = scriptContext.newRecord;
@@ -25,16 +27,16 @@ define([
             let config = getConfig(transaction);
             log.debug('config', config);
             if (config != 0) {
-                log.debug('config2', config);
-                log.debug('PRUEBA', objRecord.getValue('custbody_ts_tipo_de_cambio_presupuesto'));
+                // log.debug('config2', config);
+                // log.debug('PRUEBA', objRecord.getValue('custbody_ts_tipo_de_cambio_presupuesto'));
                 objRecord.setValue('custbody_lh_temporalidad_flag', config.temporalidad);
                 objRecord.setValue('custbody_lh_nivel_control_flag', config.nivelControl);
             } else {
                 objRecord.setValue('custbody_lh_temporalidad_flag', config);
             }
         }
-
     }
+
 
     function beforeSubmit(scriptContext) {
         const objRecord = scriptContext.newRecord;
@@ -85,7 +87,6 @@ define([
                                 notifyOff: false
                             });
                             throw myCustomError;
-
                         }
                         msgCriterio = 'No tiene presupuesto para esta categoría.';
 
@@ -125,62 +126,71 @@ define([
 
         try {
             log.debug('ordenId', ordenId);
-            for (let i = 0; i < numLines; i++) {
-                let AplicaPPTO = objRecord.getSublistValue({ sublistId: 'line', fieldId: 'custcollh_aplica_ppto', line: i });
-                let date = objRecord.getValue({ fieldId: 'trandate' })
-                date = sysDate(date);
-                log.debug('date', date)
+            let mrTask = task.create({ taskType: task.TaskType.MAP_REDUCE });
+            mrTask.scriptId = mapReduceScriptId;
+            mrTask.deploymentId = custdeploy1;
+            mrTask.params = {
+                'custscriptcustscript_param_journal': ordenId
+            };
+            let mrTaskId = mrTask.submit();
+            log.debug('TokenTask', mrTaskId);
+            // for (let i = 0; i < numLines; i++) {
+            //     let AplicaPPTO = objRecord.getSublistValue({ sublistId: 'line', fieldId: 'custcollh_aplica_ppto', line: i });
+            //     let date = objRecord.getValue({ fieldId: 'trandate' })
+            //     date = sysDate(date);
+            //     log.debug('date', date)
 
-                let month = date.month;
-                let tempo = 0;
+            //     let month = date.month;
+            //     let tempo = 0;
 
-                if (AplicaPPTO) {
-                    let nivelControl = parseInt(objRecord.getValue('custbody_lh_nivel_control_flag'));
-                    let criterioControl = objRecord.getSublistValue({ sublistId: 'line', fieldId: 'department', line: i });
-                    log.debug('criterioControl', criterioControl)
-                    if (temporalidad == TEMPORALIDAD_TRIMESTRAL) {
-                        //!const trimestre = [['01', '02', '03'], ['04', '05', '06'], ['07', '08', '09'], ['10', '11', '12']];
-                        for (let i in arregloTrimestre) {
-                            let bloque = arregloTrimestre[i].includes(month.toString());
-                            if (bloque == true) {
-                                tempo = parseInt(i);
-                                break;
-                            }
-                        }
-                    }
-                    let presupuesto = 0;
-                    let categoria = 0;
-                    if (tempo <= 9) {
-                        tempo = 0 + tempo.toString();
-                    }
-                    let presupuestado = search.create({
-                        type: "customrecord_lh_categoriap_periodo",
-                        filters:
-                            [
-                                ["custrecord_lh_detalle_cppto_status", "anyof", "1"],
-                                "AND",
-                                ["custrecord_lh_detalle_cppto_categoria.custrecord_lh_cp_centro_costo", "anyof", criterioControl],
-                                "AND",
-                                ["custrecord_lh_detalle_cppto_anio.name", "haskeywords", date.year]
-                            ],
-                        columns:
-                            [
-                                search.createColumn({ name: "custrecord_lh_detalle_cppto_categoria", label: "0 Categoría" }),
-                                search.createColumn({ name: "custrecord_lh_detalle_cppto_" + tempo, label: "1 Trimestre" }),
-                            ]
-                    });
+            //     if (AplicaPPTO) {
+            //         let nivelControl = parseInt(objRecord.getValue('custbody_lh_nivel_control_flag'));
+            //         let criterioControl = objRecord.getSublistValue({ sublistId: 'line', fieldId: 'department', line: i });
+            //         log.debug('criterioControl', criterioControl)
+            //         if (temporalidad == TEMPORALIDAD_TRIMESTRAL) {
+            //             //!const trimestre = [['01', '02', '03'], ['04', '05', '06'], ['07', '08', '09'], ['10', '11', '12']];
+            //             for (let i in arregloTrimestre) {
+            //                 let bloque = arregloTrimestre[i].includes(month.toString());
+            //                 if (bloque == true) {
+            //                     tempo = parseInt(i);
+            //                     break;
+            //                 }
+            //             }
+            //         }
+            //         let presupuesto = 0;
+            //         let categoria = 0;
+            //         if (tempo <= 9) {
+            //             tempo = 0 + tempo.toString();
+            //         }
+            //         let presupuestado = search.create({
+            //             type: "customrecord_lh_categoriap_periodo",
+            //             filters:
+            //                 [
+            //                     ["custrecord_lh_detalle_cppto_status", "anyof", "1"],
+            //                     "AND",
+            //                     ["custrecord_lh_detalle_cppto_categoria.custrecord_lh_cp_centro_costo", "anyof", criterioControl],
+            //                     "AND",
+            //                     ["custrecord_lh_detalle_cppto_anio.name", "haskeywords", date.year]
+            //                 ],
+            //             columns:
+            //                 [
+            //                     search.createColumn({ name: "custrecord_lh_detalle_cppto_categoria", label: "0 Categoría" }),
+            //                     search.createColumn({ name: "custrecord_lh_detalle_cppto_" + tempo, label: "1 Trimestre" }),
+            //                 ]
+            //         });
 
-                    let resultCount = presupuestado.runPaged().count;
-                    if (resultCount != 0) {
-                        let result = presupuestado.run().getRange({ start: 0, end: 1 });
-                        categoria = result[0].getValue(presupuestado.columns[0]);
-                        presupuesto = parseFloat(result[0].getValue(presupuestado.columns[1]));
-                    }
+            //         let resultCount = presupuestado.runPaged().count;
+            //         if (resultCount != 0) {
+            //             let result = presupuestado.run().getRange({ start: 0, end: 1 });
+            //             categoria = result[0].getValue(presupuestado.columns[0]);
+            //             presupuesto = parseFloat(result[0].getValue(presupuestado.columns[1]));
+            //         }
+            //         //objRecord.setSublistValue({ sublistId: 'line', fieldId: 'custcol_lh_ppto_flag', value: categoria, line: i });
+            //         //record.submitFields({ type: 'journalentry', id: ordenId, values: { 'memo': 'cate', 'custcol_lh_ppto_flag': categoria } });
+            //     }
 
-                    //objRecord.setSublistValue({ sublistId: 'line', fieldId: 'custcol_lh_ppto_flag', value: categoria, line: i });
-                    //record.submitFields({ type: 'journalentry', id: ordenId, values: { 'memo': 'cate', 'custcol_lh_ppto_flag': categoria } });
-                }
-            }
+
+            // }
         } catch (e) {
             log.debug('Error-sysDate', e);
         }

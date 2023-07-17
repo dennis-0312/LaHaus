@@ -251,11 +251,11 @@ define([
                 let idpartidadis = recTranferencia.getValue('custrecord_lh_detalle_cppto_partida_dis');
                 let fdesde = recTranferencia.getValue('custrecord_lh_detalle_cppto_fecha_adi');
                 let fhasta = recTranferencia.getValue('custrecord_lh_detalle_cppto_fecha_dis');
+                let fdecrease = recTranferencia.getValue('custrecord_lh_detalle_cppto_fecha_dis');
                 let monto = parseFloat(recTranferencia.getValue('custrecord_lh_detalle_cppto_aumento_ppto'));
                 let parsedDateStringAsRawDateObjectfdesde = format.parse({ value: fdesde, type: format.Type.DATE });
                 fdesde = format.format({ value: parsedDateStringAsRawDateObjectfdesde, type: format.Type.DATE });
-                let parsedDateStringAsRawDateObjectfhasta = format.parse({ value: fdesde, type: format.Type.DATE });
-                fhasta = format.format({ value: parsedDateStringAsRawDateObjectfhasta, type: format.Type.DATE });
+
 
                 if (solicitud == ADICION) {
                     if (_idStatus == APPROVED_STATUS) {
@@ -275,22 +275,31 @@ define([
                     }
                 } else {
                     if (_idStatus == APPROVED_STATUS) {
+                        let parsedDateStringAsRawDateObjectfhasta = format.parse({ value: fdecrease, type: format.Type.DATE });
+                        fhasta = format.format({ value: parsedDateStringAsRawDateObjectfhasta, type: format.Type.DATE });
+                        //console.log('Hasta', fhasta);
+                        let parsedDateStringAsRawDateObjectfdecrease = format.parse({ value: fdecrease, type: format.Type.DATE });
+                        fdecrease = format.format({ value: parsedDateStringAsRawDateObjectfdecrease, type: format.Type.DATE });
+                        //console.log('fdecrease', fdecrease);
                         let year = fhasta.split('/')[2];
-                        let month = parseInt(fhasta.split('/')[1]);
+                        let month = parseInt(fdecrease.split('/')[1]);
                         let tempConfig = _controller.getConfig();
-                        if (tempConfig == TEMPORALIDAD_MENSUAL) {
+                        if (tempConfig == TEMPORALIDAD_MENSUAL || tempConfig == TEMPORALIDAD_TRIMESTRAL) {
                             rangeDates = _controller.getMonthly(parseInt(month), year);
-                        } else if (tempConfig == TEMPORALIDAD_TRIMESTRAL) {
-                            for (let i in arregloTrimestre) {
-                                let bloque = arregloTrimestre[i].includes(month.toString());
-                                if (bloque == true) {
-                                    tempo = parseInt(i);
-                                    break;
-                                }
-                            }
-                            rangeDates = _controller.getQuaterly(tempo, year);
+                        }
+                        // else if (tempConfig == TEMPORALIDAD_TRIMESTRAL) {
+                        //     for (let i in arregloTrimestre) {
+                        //         let bloque = arregloTrimestre[i].includes(month.toString());
+                        //         if (bloque == true) {
+                        //             tempo = parseInt(i);
+                        //             break;
+                        //         }
+                        //     }
+                        //     alert(tempo);
+                        //     rangeDates = _controller.getQuaterly(tempo, year);
 
-                        } else if (tempConfig == TEMPORALIDAD_ANUAL) {
+                        // } 
+                        else if (tempConfig == TEMPORALIDAD_ANUAL) {
                             alert('Revisar proceso de transferencia anual. Comunicarse con el área de soporte.');
                         } else {
                             alert('No existe una configuración de presupuesto activo.');
@@ -302,13 +311,19 @@ define([
                         let ejecutado = _controller.getEjecutado(rangeDates.fdesde, rangeDates.fhasta, idpartidadis);
                         let disponible = parseFloat(presupuestado) - (parseFloat(reservado) + parseFloat(comprometido) + parseFloat(ejecutado));
                         let tengodisponible = disponible - monto;
+
                         console.log('presupuestado:', presupuestado);
+                        // console.log('reservado:', reservado);
+                        // console.log('comprometido:', comprometido);
+                        // console.log('ejecutado:', ejecutado);
                         console.log('tengodisponible:', disponible);
                         console.log('tengodisponibleFinal:', tengodisponible);
 
                         if (tengodisponible >= 0) {
+                            console.log('Fechas', fdesde + ' - ' + fhasta);
+                            console.log('Fechas Decrease', fdecrease);
                             let successInc = _controller.applyIncrease(fdesde, monto, idpartidaadi);
-                            let successDec = _controller.applyDecrease(fhasta, monto, idpartidadis);
+                            let successDec = _controller.applyDecrease(fdecrease, monto, idpartidadis);
                             if (successInc == 1 && successDec == 1) {
                                 alert('Transferencia realizada con éxito');
                                 recTranferencia.setValue('custrecord_lh_detalle_cppto_estado_aprob', _idStatus);
