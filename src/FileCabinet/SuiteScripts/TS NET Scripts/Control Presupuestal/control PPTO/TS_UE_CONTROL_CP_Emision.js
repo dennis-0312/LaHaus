@@ -551,7 +551,7 @@ define(['N/log', 'N/search', 'N/record', 'N/runtime', 'N/task'], (log, search, r
                                         let internalId = result[i].getValue({ name: "internalId" });
                                         let estado = result[i].getValue({ name: "custrecord_lh_cp_dt_estado_busqueda" });
                                         let comprometido = parseFloat(result[i].getValue({ name: "custrecord_lh_cp_dt_comprometido" }));
-                                        let ejecutado = parseFloat(result[i].getValue({ name: "custrecord_lh_cp_dt_ejecutado" })); //TODO Por si hay ejecutaod parcial sume y no setee
+                                        let ejecutado = parseFloat(result[i].getValue({ name: "custrecord_lh_cp_dt_ejecutado" })); //? Por si hay ejecutaod parcial sume y no setee
 
                                         ejecutado = ejecutado - monto;
                                         comprometido = comprometido + monto;
@@ -1152,7 +1152,7 @@ define(['N/log', 'N/search', 'N/record', 'N/runtime', 'N/task'], (log, search, r
                                 });
                                 log.debug('Proceso-Anulación', 'Transacción ' + context.newRecord.id + ' con detalle: ' + arrayCategorias[i][0] + ' pago anulado');
 
-                                //TODO: Actualización de PPTO
+                                //?: Actualización de PPTO
                                 let objSearch2 = search.load({ id: CATEGORIA_PPTO_PERIODOS });
                                 let filters2 = objSearch2.filters;
                                 let filterFour = search.createFilter({ name: 'custrecord_lh_detalle_cppto_categoria', operator: search.Operator.ANYOF, values: category });
@@ -1917,7 +1917,7 @@ define(['N/log', 'N/search', 'N/record', 'N/runtime', 'N/task'], (log, search, r
                                     let internalId = result[i].getValue({ name: "internalId" });
                                     let estado = result[i].getValue({ name: "custrecord_lh_cp_dt_estado_busqueda" });
                                     let comprometido = parseFloat(result[i].getValue({ name: "custrecord_lh_cp_dt_comprometido" }));
-                                    let ejecutado = parseFloat(result[i].getValue({ name: "custrecord_lh_cp_dt_ejecutado" })); //TODO Por si hay ejecutado parcial sume y no setee
+                                    let ejecutado = parseFloat(result[i].getValue({ name: "custrecord_lh_cp_dt_ejecutado" })); //? Por si hay ejecutado parcial sume y no setee
                                     if (comprometido < monto) {
                                         comprometido = monto - comprometido;
                                     } else {
@@ -2101,7 +2101,7 @@ define(['N/log', 'N/search', 'N/record', 'N/runtime', 'N/task'], (log, search, r
                                 });
 
                                 let ejecutado = parseFloat(result[i].getValue({ name: "custrecord_lh_cp_dt_ejecutado" }));
-                                let disponible = parseFloat(result[i].getValue({ name: "custrecord_lh_cp_dt_disponible" }));//TODO Por si hay ejecutaod parcial sume y no setee
+                                let disponible = parseFloat(result[i].getValue({ name: "custrecord_lh_cp_dt_disponible" }));//? Por si hay ejecutaod parcial sume y no setee
                                 if (ejecutado < monto) {
                                     ejecutado = monto - ejecutado;
                                 } else {
@@ -2424,7 +2424,7 @@ define(['N/log', 'N/search', 'N/record', 'N/runtime', 'N/task'], (log, search, r
                                             let internalId = result[i].getValue({ name: "internalId" });
                                             let estado = result[i].getValue({ name: "custrecord_lh_cp_dt_estado_busqueda" });
                                             let comprometido = parseFloat(result[i].getValue({ name: "custrecord_lh_cp_dt_comprometido" }));
-                                            let ejecutado = parseFloat(result[i].getValue({ name: "custrecord_lh_cp_dt_ejecutado" })); //TODO Por si hay ejecutado parcial sume y no setee
+                                            let ejecutado = parseFloat(result[i].getValue({ name: "custrecord_lh_cp_dt_ejecutado" })); //? Por si hay ejecutado parcial sume y no setee
                                             if (comprometido < monto) {
                                                 comprometido = monto - comprometido;
                                             } else {
@@ -2508,7 +2508,7 @@ define(['N/log', 'N/search', 'N/record', 'N/runtime', 'N/task'], (log, search, r
                     log.error('Error-afterSubmit-Void', error);
                 }
 
-                //TODO Otra función para anulación de factura
+                //? Otra función para anulación de factura
                 // var voided = rec.getValue({ fieldId: 'voided' });
                 // log.debug("voided", voided);
                 // if (voided) {
@@ -2537,7 +2537,7 @@ define(['N/log', 'N/search', 'N/record', 'N/runtime', 'N/task'], (log, search, r
                         });
                         // let estadoPPTO = objOC.custbody_lh_cp_estado_ppto_oc[0].value;
                         // let updateFlag = objOC.custbody_lh_update_flag;
-                        //TODO Bloque para ingresar una oc al control presupuestal
+                        //? Bloque para ingresar una oc al control presupuestal
                         log.debug('Saved-Edit', 'Orden de compra ' + recordId + ' ingresa al control presupuestal.');
                         executeCreated(recordId, objOC);
                         //record.submitFields({ type: record.Type.PURCHASE_ORDER, id: recordId, values: { 'custbody_lh_cp_estado_ppto_oc': 2 } });
@@ -2576,7 +2576,7 @@ define(['N/log', 'N/search', 'N/record', 'N/runtime', 'N/task'], (log, search, r
             //             if (estadoPPTO == RESERVADO && updateFlag == 1) {
             //                 log.debug('Input', 'Entré a crear por update, no void');
             //                 executeCreated(recordId, objOC);
-            //             } else if (estadoPPTO == RESERVADO && updateFlag == 2) { //TODO Bloque para ingresar una oc al control presupuestal
+            //             } else if (estadoPPTO == RESERVADO && updateFlag == 2) { //? Bloque para ingresar una oc al control presupuestal
             //                 log.debug('Saved-Edit', 'Orden de compra ' + recordId + ' ingresa al control presupuestal.');
             //                 executeCreated(recordId, objOC);
             //             } else {
@@ -2716,7 +2716,7 @@ define(['N/log', 'N/search', 'N/record', 'N/runtime', 'N/task'], (log, search, r
                                     });
 
                                     let ejecutado = parseFloat(result[i].getValue({ name: "custrecord_lh_cp_dt_ejecutado" }));
-                                    let disponible = parseFloat(result[i].getValue({ name: "custrecord_lh_cp_dt_disponible" }));//TODO Por si hay ejecutaod parcial sume y no setee
+                                    let disponible = parseFloat(result[i].getValue({ name: "custrecord_lh_cp_dt_disponible" }));//? Por si hay ejecutaod parcial sume y no setee
                                     if (ejecutado < monto) {
                                         ejecutado = monto - ejecutado;
                                     } else {
@@ -2820,7 +2820,7 @@ define(['N/log', 'N/search', 'N/record', 'N/runtime', 'N/task'], (log, search, r
                         if (estadoPPTO == RESERVADO && updateFlag == 1) {
                             log.debug('Input', 'Entré a crear por update y porque no es void');
                             executeCreated(recordId, objOC);
-                        } else if (estadoPPTO == RESERVADO && updateFlag == 2) { //TODO Bloque para ingresar una oc al control presupuestal
+                        } else if (estadoPPTO == RESERVADO && updateFlag == 2) { //? Bloque para ingresar una oc al control presupuestal
                             log.debug('Saved-Edit', 'Informe de compra ' + recordId + ' ingresa al control presupuestal.');
                             executeCreated(recordId, objOC);
                         } else if (updateFlag == 7) {
@@ -3295,7 +3295,7 @@ define(['N/log', 'N/search', 'N/record', 'N/runtime', 'N/task'], (log, search, r
                         });
                         log.debug('Proceso-Anulación', 'Transacción ' + transactionid + ' con detalle: ' + arrayPayDetails[i][1] + ' pago anulado');
 
-                        //TODO: Actualización de PPTO
+                        //?: Actualización de PPTO
                         let objSearch2 = search.load({ id: CATEGORIA_PPTO_PERIODOS });
                         let filters2 = objSearch2.filters;
                         let filterFour = search.createFilter({ name: 'custrecord_lh_detalle_cppto_categoria', operator: search.Operator.ANYOF, values: category });
@@ -4326,7 +4326,7 @@ define(['N/log', 'N/search', 'N/record', 'N/runtime', 'N/task'], (log, search, r
                         }
                     }
 
-                    //TODO CALCULOS ===================================================================
+                    //? CALCULOS ===================================================================
                     montoDisponible = montoDisponible - param2;
                     montoEjecutado = montoEjecutado + param2;
 
@@ -4379,7 +4379,7 @@ define(['N/log', 'N/search', 'N/record', 'N/runtime', 'N/task'], (log, search, r
                         }
                     }
 
-                    //TODO CALCULOS ===================================================================
+                    //? CALCULOS ===================================================================
                     montoDisponible = montoDisponible - param2;
                     montoEjecutado = montoEjecutado + param2;
 
@@ -4541,7 +4541,7 @@ define(['N/log', 'N/search', 'N/record', 'N/runtime', 'N/task'], (log, search, r
                 }
             }
 
-            //TODO CALCULOS ===================================================================
+            //? CALCULOS ===================================================================
             montoDisponible = montoDisponible - param2;
             montoComprometido = montoComprometido + param2;
 

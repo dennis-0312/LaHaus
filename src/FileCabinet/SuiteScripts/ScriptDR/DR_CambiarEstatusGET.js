@@ -197,7 +197,7 @@ define(['N/log', 'N/ui/serverWidget', 'N/record', 'N/search', 'N/email', 'N/task
                     }
                 }
             }
-            //TODO Envío email de respuesta
+            //~ Envío email de respuesta
             var response = Aprobado == 'NO' ? 'rechazado' : 'aprobado';
             // if (updateFlag != "4") {
             //     response = "NO Aprobado";
