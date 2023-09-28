@@ -317,7 +317,7 @@ define(['N/email', 'N/log', 'N/record', 'N/ui/dialog', 'N/file', 'N/search', 'N/
                   recipients: context.getValue('custbodylh_aprobador'),    // recordType=='exprept'?context.getValue('nextapprover'):context.getValue('custbodylh_aprobador'),
                   subject: recordType=='exprept'?'Autorizar Informe de Gastos':'Autorizar Pedido', // 'Autorizar PEDIDO ',
                   body:  myvar,
-                 // attachments:[archivo], //adjuntos,
+                 attachments:[archivo], //adjuntos,
                   relatedRecords: {
                     transactionId: context.getValue('id')
                 }
